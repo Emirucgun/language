@@ -224,6 +224,8 @@ Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazı
 | Ses–metin uyumu | TTS'e giden metin = ekranda doğrulanan metin |
 | Geri bildirim | Etiket sabit kümeden mi, en fazla 2 hata gösteriliyor mu, ipucu doğru cümleyi içeriyor mu |
 
+**Uygulandı (`api/app/validator/`):** `core.py` (sonuç tipi, sözcükleme, `vocab_allowlist` + öğe biçimlerinden seviye sözlüğü), `feedback.py` (tutarlılık, katalog kodu, konum, ipucu ≤120 karakter, ipucunda düzeltme kelimesi yok, düzeltme öğrencinin cümlesine ≥0.5 benzer ve seviye içinde; gösterilen hata en fazla 2), `activity.py` (seviye, hedef öğe, cevap sızıntısı, tek doğru şık, ses–metin uyumu, uzunluk). Bilinen sınır: cümle başındaki özel isim sıradan kelimeden ayırt edilemez; üretici kullandığı isimleri izinli kelime olarak verir.
+
 İzinli kelime listesinin kaynağı EVP lisans sonucuna bağlı (Faz 0). Lisans uygun değilse açık bir frekans listesi + Işıl'ın havuzu ile kendi listemiz türetilir. Lemmatizasyon MVP'de basit tutulur; yetmezse spaCy değerlendirilir.
 
 **Altın set.** `eval/golden/` altında Işıl'ın etiketlediği ~100 cümle (JSONL). `uv run python -m eval.golden --purpose feedback` komutu blueprint Bölüm 7'deki beş ölçütü raporlar. Prompt ya da model değişikliği bu rapor olmadan birleştirilmez.
