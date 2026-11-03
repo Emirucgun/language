@@ -180,6 +180,8 @@ Varsayım, kullanıcı-gün başına: oturum üretimi (3k girdi / 5k çıktı), 
 | Hepsi Sonnet 5.5 | ~$324 |
 | Karşılaştırma: Gemini Flash (giriş fiyatı / 2027 fiyatı) | ~$122 / ~$243 |
 
+**İlk ölçüm (3 Kas 2026, `api/scripts/try_feedback.py`, Sonnet 5.5, 10 tipik A1 cümlesi):** 10/10 doğrulayıcıdan geçti, hata türleri doğru, 2 doğru cümle doğru kabul edildi (aşırı düzeltme yok). Önbellek tutuyor: ilk çağrı 1.971 token yazdı, sonraki 9 çağrı aynı 1.971 token'ı okudu; önbelleksiz girdi çağrı başına ~40 token. Çıktı çoğunlukla 80–100 token (bir çağrıda 401). Maliyet: ilk çağrı $0.0088, sonrakiler ortalama ~$0.0015; toplam $0.023. Tahmindeki geri bildirim çağrısı (~$0.011) gerçekte yaklaşık 7 kat ucuz. Gecikme 1,2–8,1 sn (medyan ~2,5 sn). Hata etiketleri ve açıklamalar bu denemede taslaktı; seviye sözlüğü geçiciydi.
+
 **Bütçe:** Geliştirme, altın set koşuları ve pilot dahil **$150 üst sınır**. Konsolda harcama limiti ayarlanır. Kullanıcı başına günlük çağrı limiti başlangıçta 20. Gerçek token sayıları `llm_calls` tablosundan Hafta 1'deki ilk örnek oturumla doğrulanır; tahmin %50'den fazla saparsa bu tablo güncellenir.
 
 **Model API'si için uygulama notları (SDK sürümüne karşı kod yazarken doğrulanacak):**

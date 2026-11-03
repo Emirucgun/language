@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app import models  # noqa: F401 - tüm tabloları kaydeder; ilişkiler (FK) çözülebilsin
 from app.config import settings
 
 app = FastAPI(title="Teacher API", version="0.1.0")
