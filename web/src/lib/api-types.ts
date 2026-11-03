@@ -267,6 +267,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/curriculum": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Curriculum
+         * @description Güncel müfredat; yoksa ilk istekte oluşturulur (birkaç saniye sürebilir).
+         */
+        get: operations["get_curriculum_api_curriculum_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -373,6 +393,19 @@ export interface components {
             is_adult_confirmed: true;
             /** Display Name */
             display_name?: string | null;
+        };
+        /** CurriculumView */
+        CurriculumView: {
+            /** Version */
+            version: number;
+            /** Summary Tr */
+            summary_tr: string;
+            /** Weeks */
+            weeks: components["schemas"]["WeekView"][];
+            /** Current Week */
+            current_week: number;
+            /** Estimate Tr */
+            estimate_tr: string;
         };
         /** Example */
         Example: {
@@ -543,6 +576,17 @@ export interface components {
             /** End */
             end: number;
         };
+        /** SkillWeights */
+        SkillWeights: {
+            /** Vocabulary */
+            vocabulary: number;
+            /** Reading */
+            reading: number;
+            /** Listening */
+            listening: number;
+            /** Writing */
+            writing: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -560,6 +604,22 @@ export interface components {
         VerifyRequest: {
             /** Token */
             token: string;
+        };
+        /** WeekView */
+        WeekView: {
+            /** Week */
+            week: number;
+            /** Focus Tr */
+            focus_tr: string;
+            /** Can Do Tr */
+            can_do_tr: string[];
+            /** Item Count */
+            item_count: number;
+            /** Items En */
+            items_en: string[];
+            /** Current */
+            current: boolean;
+            skill_weights: components["schemas"]["SkillWeights"];
         };
         /** WritingRequest */
         WritingRequest: {
@@ -1080,6 +1140,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WritingTask"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_curriculum_api_curriculum_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurriculumView"];
                 };
             };
             /** @description Validation Error */

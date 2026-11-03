@@ -13,6 +13,7 @@ from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.models import User
+from app.curriculum.schemas import CurriculumDraft
 from app.llm.client import LLMRequest, LLMResult
 from app.llm.pricing import Usage
 from app.scheduler.models import ItemState
@@ -75,6 +76,9 @@ class SessionFake:
         return Choice(prompt=prompt, options=[target, *others], answer=target)
 
     def complete(self, request: LLMRequest) -> LLMResult:
+        if request.output_type is CurriculumDraft:
+            # Müfredat burada konu değil: çıktı yok → kural katmanı yedek planı kullanır.
+            return LLMResult(request.config.model, None, Usage(0, 0), "max_tokens", 1, None)
         self.tasks.append(request.task)
         task = request.task
         output = None

@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.models import User
 from app.content.models import Item
+from app.curriculum.service import ensure_curriculum, new_item_order
 from app.llm.client import LLMClient
 from app.llm.prompts import render_static
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
@@ -88,7 +89,9 @@ def _quotas(daily_minutes: int | None) -> tuple[int, int]:
     return 8, 4
 
 
-def plan_session(db: Session, user: User, local_date: date) -> SessionPlan:
+def plan_session(
+    db: Session, user: User, local_date: date, curriculum_order: list[int] | None = None
+) -> SessionPlan:
     max_reviews, max_new = _quotas(user.daily_minutes)
     start_level, cefr_sub = user_level(db, user.id)
     items = list(
@@ -99,11 +102,13 @@ def plan_session(db: Session, user: User, local_date: date) -> SessionPlan:
         )
     )
     by_id = {i.id: _card(i) for i in items}
-    # Müfredat ajanı gelene kadar yeni öğe sırası havuz sırasıdır: A1 öğrencisine yalnızca
-    # A1 öğeleri; A2 öğrencisine önce A2, sonra henüz görmediği A1 öğeleri.
-    new_order = [i.id for i in items if i.cefr == start_level]
+    # Yeni öğe sırası müfredattan (bu haftadan başlayarak). Müfredat yoksa havuz sırası:
+    # A1 öğrencisine yalnızca A1 öğeleri; A2 öğrencisine önce A2, sonra A1 öğeleri.
+    level_order = [i.id for i in items if i.cefr == start_level]
     if start_level == "A2":
-        new_order += [i.id for i in items if i.cefr == "A1"]
+        level_order += [i.id for i in items if i.cefr == "A1"]
+    planned = [i for i in (curriculum_order or []) if i in by_id]
+    new_order = planned or level_order
     end_of_day = datetime.combine(local_date + timedelta(days=1), time.min, ZoneInfo(user.timezone))
     selection = select_items(
         db,
@@ -318,7 +323,8 @@ def ensure_session(
         db.add(study)
         db.flush()
 
-    full_plan = plan_session(db, user, local_date)
+    curriculum = ensure_curriculum(db, client, user)
+    full_plan = plan_session(db, user, local_date, new_item_order(curriculum))
     snapshot = daily_snapshot(db, user.id)
     study.snapshot_id = snapshot.id
     lexicon = lexicon or load_lexicon(db)

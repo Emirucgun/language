@@ -45,6 +45,14 @@ export default function PanelPage() {
         </Link>
       </Card>
 
+      <Link
+        href="/curriculum"
+        className="flex min-h-12 items-center justify-between rounded-xl border border-line bg-card px-4 hover:bg-muted"
+      >
+        <span className="font-medium">Planın</span>
+        <span className="text-sm text-subtle">8 haftalık yol haritası →</span>
+      </Link>
+
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Ek çalışma</h2>
         <div className="grid grid-cols-2 gap-2">
