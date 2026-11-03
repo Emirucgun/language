@@ -85,6 +85,8 @@ Blueprint'teki "iki veri deposu" (içerik deposu ve olay/öğrenci deposu) MVP'd
 4. Hangi öğenin çalışılacağına yalnızca `scheduler` karar verir; etkinlik üretimi bu listeyi girdi olarak alır, değiştiremez.
 5. Model adı, prompt sürümü ve doğrulayıcı sonucu her üretimle birlikte saklanır.
 
+**Tekrar motoru (uygulandı, `api/app/scheduler/`):** py-fsrs 6, hedef hatırlama 0.9, **bulanıklaştırma kapalı** (yeniden oynatma deterministik olsun diye). Derece kuralı: yanlış → Again, ipuçlu doğru → Hard, doğru → Good; Easy kullanılmıyor. Her öğe durumu işlediği son olayı (filigran) tutar; `update_item_states` artımlı ilerler, `rebuild_item_states` sıfırdan hesaplar, `find_mismatches` ikisini karşılaştırır. Olay yazan kod ve durum güncellemesi aynı kullanıcı kilidini (`lock_user`) alır. Öğe seçimi: önce vadesi gelenler (en gecikmiş önce), sonra müfredat sırasındaki yeni öğeler; tekrar birikmişse yeni öğe kotası yarıya iner.
+
 ## 4. Veri modeli (sürüm 1, 3 Kas 2026)
 
 Üç kural: **(1)** olay bir kez yazılır, türev tablolar olaylardan yeniden üretilebilir; **(2)** her bilgi tek yerde durur, başka tablolar ona referans verir (kopya yok); **(3)** LLM'in o an ne gördüğü her zaman yeniden kurulabilir (prompt dosyası sürümü + öğrenci özeti + görev girdisi). Alan adları kodda İngilizce.

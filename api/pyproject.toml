@@ -29,7 +29,7 @@ target-version = "py314"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 # Türkçe yorum ve metinler: noktasız ı karışıklık sayılmasın.
-allowed-confusables = ["ı"]
+allowed-confusables = ["ı", "–"]
 # SQLAlchemy bildirimsel modellerinde `__table_args__` sözlükleri bu kuralı yanlış tetikler.
 ignore = ["RUF012"]
 
