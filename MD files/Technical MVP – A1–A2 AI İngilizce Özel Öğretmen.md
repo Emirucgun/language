@@ -255,6 +255,15 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Seçim kuralı:** yerel saat 03:00'ü geçmiş, onam + hedef tamam, son 7 günde aktif (ya da yeni kayıt) ve bugünün oturumu hazır değil. 7 günden uzun süredir gelmeyen kullanıcıya para harcanmaz; döndüğünde oturum istek anında üretilir.
 - **İlk gerçek çalışma (3 Kas 2026):** yeni bir kullanıcı için oturum arka planda 16,6 sn'de üretildi (2 Haiku çağrısı), öğrenci beklemedi. Ancak oturum zayıf çıktı (4 etkinlik, 2'si şablon, okuma yok): reddedilen 7 çıktının hepsi seviye kontrolündendi (cat, near, museum, flat, things...). Neden küçük geliştirme listesiydi. **CEFR-J'ye geçince** aynı profil (seyahat, yemek + müzik) için oturum tek Haiku çağrısında, 10,9 sn'de, $0.0011'e, 0 ret ile üretildi: 5 etkinliğin hepsi LLM'den, okuma dahil. Önceki 12 ret yeniden doğrulandı: 9'u geçti, kalan 3'ü gerçekten B1 kelimeler (jazz, spicy, strawberries).
 
+## 6.6 Yerleştirme testi (uygulandı)
+
+- **Sorular (`api/scripts/placement_v1.py`, TASLAK):** 24 özgün soru, A1 ve A2'den 12'şer: kelime, yapı, iki kısa okuma metni. Dinleme TTS seçilince eklenecek (sürüm 2). Pilot öncesi Işıl onayı gerekli; onaylanınca `fixed_tests.approved_by/approved_at` doldurulur. İçerik değişirse yeni sürüm açılır (eski cevaplar eski sürüme bağlı kalır).
+- **Puanlama (`app/onboarding/placement.py`):** A1 < %50 → "pre-A1"; değilse A2 < %50 → A1; değilse A2. Alt seviye: kendi seviyesinde ≥ %80 ise 2, değilse 1. "Bilmiyorum" yanlış sayılır. pre-A1 öğrenci A1.1'den başlar.
+- **Akış (`app/onboarding/fixed_tests.py`):** her cevap `fixed_test_answer`, sonuç `fixed_test_completed` olayı; test sırasında doğru cevap gösterilmez, cevaplar tekrar motorunu etkilemez, yarıda kalan test kaldığı yerden sürer. Şıklar kullanıcıya özgü ama sabit sırayla karıştırılır: taslak bankada doğru cevap çoğunlukla ilk şıktaydı ve tarayıcı denemesinde fark edildi.
+- **Etkisi:** onboarding sırası onam → hedef → yerleştirme → panel. Oturum üretiminde A1 öğrencisine yalnızca A1 öğeleri, A2 öğrencisine önce A2 öğeleri gelir; paylaşılan içerik alt seviyeye (`A1.1`, `A2.2`…) göre eşleşir.
+- **H3:** aynı sabit test ön test olarak kullanılabilir; son test için aynı mekanizma `purpose = 'post'` ile çalışır (henüz içerik yok).
+- **Uç noktalar:** `GET /api/onboarding/placement`, `POST /api/onboarding/placement/answer`, `POST /api/onboarding/placement/complete`.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |
