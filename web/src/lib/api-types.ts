@@ -111,6 +111,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/onboarding/placement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Placement */
+        get: operations["get_placement_api_onboarding_placement_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/onboarding/placement/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Placement Answer */
+        post: operations["post_placement_answer_api_onboarding_placement_answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/onboarding/placement/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Placement */
+        post: operations["complete_placement_api_onboarding_placement_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/feedback": {
         parameters: {
             query?: never;
@@ -354,6 +405,25 @@ export interface components {
              */
             errors: components["schemas"]["ShownError"][];
         };
+        /**
+         * FixedQuestionView
+         * @description Öğrenciye giden hali: cevap yok.
+         */
+        FixedQuestionView: {
+            /** Id */
+            id: string;
+            /**
+             * Section
+             * @enum {string}
+             */
+            section: "vocabulary" | "grammar" | "reading" | "listening";
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: string[];
+            /** Passage */
+            passage?: string | null;
+        };
         /** GoalSet */
         GoalSet: {
             /**
@@ -399,6 +469,38 @@ export interface components {
             timezone: string;
             /** Consent Done */
             consent_done: boolean;
+            /** Placement Done */
+            placement_done: boolean;
+            /** Level */
+            level: string | null;
+        };
+        /** PlacementAnswer */
+        PlacementAnswer: {
+            /** Question Id */
+            question_id: string;
+            /** Answer */
+            answer: string;
+            /** Duration Ms */
+            duration_ms?: number | null;
+        };
+        /** PlacementResult */
+        PlacementResult: {
+            /** Cefr Estimate */
+            cefr_estimate: string;
+            /** Sublevel */
+            sublevel: number;
+            /** Score */
+            score: number;
+        };
+        /** PlacementView */
+        PlacementView: {
+            /** Version */
+            version: number;
+            /** Questions */
+            questions: components["schemas"]["FixedQuestionView"][];
+            /** Answered */
+            answered: string[];
+            result: components["schemas"]["PlacementResult"] | null;
         };
         /** Recorded */
         Recorded: {
@@ -677,6 +779,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_placement_api_onboarding_placement_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_placement_answer_api_onboarding_placement_answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlacementAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_placement_api_onboarding_placement_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementResult"];
                 };
             };
             /** @description Validation Error */

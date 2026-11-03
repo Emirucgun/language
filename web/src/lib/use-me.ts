@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 
 import { ApiError, api, type Me } from "./api";
 
-/** Kullanıcının bir sonraki zorunlu adımı: onam → hedef → panel. */
+/** Kullanıcının bir sonraki zorunlu adımı: onam → hedef → yerleştirme testi → panel. */
 export function nextPath(me: Me): string {
   if (!me.consent_done) return "/onboarding/consent";
   if (!me.goal) return "/onboarding/goals";
+  if (!me.placement_done) return "/onboarding/placement";
   return "/panel";
 }
 
@@ -16,7 +17,7 @@ export function nextPath(me: Me): string {
  * Giriş yapmış kullanıcıyı yükler. Giriş yoksa /login'e, sayfa bu kullanıcı için
  * henüz açılmamışsa (ör. onamdan önce panel) doğru adıma yönlendirir.
  */
-export function useMe(page: "consent" | "goals" | "app"): Me | null {
+export function useMe(page: "consent" | "goals" | "placement" | "app"): Me | null {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
 
@@ -30,6 +31,7 @@ export function useMe(page: "consent" | "goals" | "app"): Me | null {
         const allowed =
           page === "consent" ||
           (page === "goals" && user.consent_done) ||
+          (page === "placement" && user.consent_done && !!user.goal) ||
           (page === "app" && required === "/panel");
         if (allowed) setMe(user);
         else router.replace(required);

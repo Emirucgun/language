@@ -59,6 +59,11 @@ export const api = {
       text,
       activity_id: activityId ?? null,
     }),
+  placement: () => request<Schemas["PlacementView"]>("GET", "/api/onboarding/placement"),
+  placementAnswer: (body: Schemas["PlacementAnswer"]) =>
+    request<void>("POST", "/api/onboarding/placement/answer", body),
+  placementComplete: () =>
+    request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
   sessionToday: () => request<SessionView>("GET", "/api/session/today"),
   answer: (activityId: number, body: Schemas["AnswerRequest"]) =>
     request<AnswerResult>("POST", `/api/activities/${activityId}/answer`, body),

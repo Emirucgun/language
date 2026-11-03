@@ -6,12 +6,15 @@
     uv run python -m scripts.seed_dev_content
 """
 
+import json
 import os
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
+from app.onboarding.placement import FixedQuestion
 from scripts.dev_content import ERROR_TAGS, ITEMS
+from scripts.placement_v1 import QUESTIONS as PLACEMENT_V1
 
 load_dotenv()
 
@@ -28,6 +31,15 @@ def main() -> None:
                 ),
                 {"c": code, "n": name, "e": explanation},
             )
+        # Sabit test: şemaya karşı doğrulanır; sürüm zaten varsa dokunulmaz (cevaplar ona bağlı).
+        questions = [FixedQuestion.model_validate(q).model_dump() for q in PLACEMENT_V1]
+        conn.execute(
+            text(
+                "INSERT INTO content.fixed_tests (purpose, version, questions) "
+                "VALUES ('placement', 1, CAST(:q AS jsonb)) ON CONFLICT DO NOTHING"
+            ),
+            {"q": json.dumps(questions, ensure_ascii=False)},
+        )
         existing = set(
             conn.scalars(text("SELECT text_en FROM content.items WHERE pool_version = 'dev-seed'"))
         )

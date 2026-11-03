@@ -24,6 +24,7 @@ from app.llm.client import LLMClient
 from app.llm.prompts import render_static
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
+from app.onboarding.fixed_tests import user_level
 from app.scheduler.service import lock_user, select_items
 from app.sessions.models import Activity, ActivityContent, StudySession
 from app.sessions.schemas import ActivityModel, Kind, SessionOutput
@@ -41,7 +42,6 @@ PROMPT_VERSION = "v2"  # v2: "Can" isim listesinden çıktı (modal "can" ile ka
 SHAREABLE_KINDS = ("recall", "new_item")
 ORDER: dict[Kind, int] = {"new_item": 0, "recall": 1, "reading": 2, "writing": 3}
 READING = 0  # okuma tek öğeye bağlı değil; eksik listesinde bu anahtarla tutulur
-CEFR_SUB = "A1"  # yerleştirme testi gelene kadar
 
 Wanted = set[tuple[Kind, int]]
 
@@ -52,6 +52,7 @@ class SessionPlan:
     new: list[ItemCard]
     reading: list[ItemCard]  # boşsa okuma yok
     writing: list[ItemCard]
+    cefr_sub: str = "A1.1"  # yerleştirme testinden; paylaşılan içerik bununla eşleşir
 
 
 @dataclass(slots=True)
@@ -89,19 +90,26 @@ def _quotas(daily_minutes: int | None) -> tuple[int, int]:
 
 def plan_session(db: Session, user: User, local_date: date) -> SessionPlan:
     max_reviews, max_new = _quotas(user.daily_minutes)
-    items = db.scalars(
-        select(Item)
-        .where(Item.active, Item.cefr.in_(("A1", "A2")))
-        .order_by(Item.sublevel.nulls_last(), Item.id)
+    start_level, cefr_sub = user_level(db, user.id)
+    items = list(
+        db.scalars(
+            select(Item)
+            .where(Item.active, Item.cefr.in_(("A1", "A2")))
+            .order_by(Item.sublevel.nulls_last(), Item.id)
+        )
     )
     by_id = {i.id: _card(i) for i in items}
+    # Müfredat ajanı gelene kadar yeni öğe sırası havuz sırasıdır: A1 öğrencisine yalnızca
+    # A1 öğeleri; A2 öğrencisine önce A2, sonra henüz görmediği A1 öğeleri.
+    new_order = [i.id for i in items if i.cefr == start_level]
+    if start_level == "A2":
+        new_order += [i.id for i in items if i.cefr == "A1"]
     end_of_day = datetime.combine(local_date + timedelta(days=1), time.min, ZoneInfo(user.timezone))
-    # Müfredat ajanı gelene kadar yeni öğe sırası havuz sırasıdır.
     selection = select_items(
         db,
         user.id,
         due_before=end_of_day,
-        candidate_new_ids=list(by_id),
+        candidate_new_ids=new_order,
         max_reviews=max_reviews,
         max_new=max_new,
     )
@@ -113,6 +121,7 @@ def plan_session(db: Session, user: User, local_date: date) -> SessionPlan:
         new=new,
         reading=today[:4] if len(today) >= 2 else [],
         writing=today[:1],
+        cefr_sub=cefr_sub,
     )
 
 
@@ -126,7 +135,7 @@ def _interest_tag(user: User) -> str | None:
     return sorted(user.interests)[0] if user.interests else None
 
 
-def _reusable(db: Session, user: User, kind: Kind, card: ItemCard) -> int | None:
+def _reusable(db: Session, user: User, kind: Kind, card: ItemCard, cefr_sub: str) -> int | None:
     """Başka bir kullanıcı için üretilmiş, onaylı ve bu kullanıcının görmediği içerik."""
     seen = select(Activity.content_id).where(Activity.user_id == user.id)
     return db.scalar(
@@ -136,7 +145,7 @@ def _reusable(db: Session, user: User, kind: Kind, card: ItemCard) -> int | None
             ActivityContent.status == "approved",
             ActivityContent.shareable,
             ActivityContent.item_ids == [card.id],
-            ActivityContent.cefr_sub == CEFR_SUB,
+            ActivityContent.cefr_sub == cefr_sub,
             ActivityContent.interest_tag.is_not_distinct_from(_interest_tag(user)),
             ActivityContent.id.not_in(seen),
         )
@@ -241,10 +250,13 @@ def _narrow(plan: SessionPlan, missing: Wanted) -> SessionPlan:
         new=[c for c in plan.new if ("new_item", c.id) in missing],
         reading=plan.reading if ("reading", READING) in missing else [],
         writing=[c for c in plan.writing if ("writing", c.id) in missing],
+        cefr_sub=plan.cefr_sub,
     )
 
 
-def _store_content(db: Session, final: Final, user: User, status: str, salt: str = "") -> int:
+def _store_content(
+    db: Session, final: Final, user: User, cefr_sub: str, status: str, salt: str = ""
+) -> int:
     assert final.activity is not None
     canonical = json.dumps(final.activity.model_dump(), sort_keys=True, ensure_ascii=False)
     digest = hashlib.sha256(f"{final.kind}|{salt}|{canonical}".encode()).digest()
@@ -254,7 +266,7 @@ def _store_content(db: Session, final: Final, user: User, status: str, salt: str
             content_hash=digest,
             kind=final.kind,
             item_ids=final.item_ids,
-            cefr_sub=CEFR_SUB,
+            cefr_sub=cefr_sub,
             interest_tag=_interest_tag(user),
             content=final.activity.model_dump(),
             model="llm" if final.call_id else None,
@@ -320,12 +332,12 @@ def ensure_session(
         ("new_item", full_plan.new, new),
     ):
         for card in cards:
-            reused = _reusable(db, user, kind, card)  # type: ignore[arg-type]
+            reused = _reusable(db, user, kind, card, full_plan.cefr_sub)  # type: ignore[arg-type]
             if reused is None:
                 keep.append(card)
             else:
                 finals.append(Final(kind, [card.id], "session", content_id=reused))  # type: ignore[arg-type]
-    plan = SessionPlan(review, new, full_plan.reading, full_plan.writing)
+    plan = SessionPlan(review, new, full_plan.reading, full_plan.writing, full_plan.cefr_sub)
 
     # 2. Üretim, 3. kalanlar için bir kez daha, 4. şablon.
     rejected: list[Final] = []
@@ -344,13 +356,15 @@ def ensure_session(
     finals += _templates(plan, missing)
 
     for final in rejected:
-        _store_content(db, final, user, "rejected")
+        _store_content(db, final, user, plan.cefr_sub, "rejected")
 
     finals.sort(key=lambda f: ORDER[f.kind])
     for position, final in enumerate(finals):
         # Şablonlar aynı öğe için tekrar eder; kullanıcı + gün ile ayrı içerik sayılır.
         salt = f"template:{user.id}:{local_date}" if final.origin == "template" else ""
-        content_id = final.content_id or _store_content(db, final, user, "approved", salt)
+        content_id = final.content_id or _store_content(
+            db, final, user, plan.cefr_sub, "approved", salt
+        )
         db.execute(
             insert(Activity)
             .values(

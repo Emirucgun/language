@@ -13,11 +13,13 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, select, update
+from sqlalchemy.orm import Session
 
 from app.auth.email import EmailSender
 from app.auth.models import AuthSession, Invite, LoginToken, User
 from app.config import settings
 from app.deps import CurrentUser, Db, get_email_sender, hash_secret
+from app.onboarding.fixed_tests import placement_result
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -39,9 +41,12 @@ class Me(BaseModel):
     interests: list[str]
     timezone: str
     consent_done: bool
+    placement_done: bool
+    level: str | None  # yerleştirme tahmini: pre-A1 / A1 / A2
 
     @classmethod
-    def of(cls, user: User) -> Me:
+    def of(cls, db: Session, user: User) -> Me:
+        placement = placement_result(db, user.id)
         return cls(
             id=str(user.id),
             display_name=user.display_name,
@@ -50,6 +55,8 @@ class Me(BaseModel):
             interests=list(user.interests),
             timezone=user.timezone,
             consent_done=user.consent_at is not None and user.is_adult_confirmed,
+            placement_done=placement is not None,
+            level=placement.cefr_estimate if placement else None,
         )
 
 
@@ -152,7 +159,7 @@ def verify_login(body: VerifyRequest, db: Db, response: Response) -> Me:
         samesite="lax",
         path="/",
     )
-    return Me.of(user)
+    return Me.of(db, user)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -171,5 +178,5 @@ def logout(
 
 
 @router.get("/me")
-def me(user: CurrentUser) -> Me:
-    return Me.of(user)
+def me(db: Db, user: CurrentUser) -> Me:
+    return Me.of(db, user)

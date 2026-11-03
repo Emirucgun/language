@@ -43,6 +43,9 @@ class FixedTestCompleted(Payload):
     test_id: int
     score: float
     cefr_estimate: str | None = None
+    # Sonradan eklenen isteğe bağlı alanlar: eski olaylar da geçerli kalır (sürüm 1).
+    sublevel: int | None = None
+    level_scores: dict[str, float] | None = None
 
 
 class AnswerSubmitted(Payload):

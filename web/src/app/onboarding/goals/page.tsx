@@ -5,7 +5,7 @@ import { type FormEvent, type KeyboardEvent, useState } from "react";
 
 import { Button, ErrorText, Loading, Screen, inputClass } from "@/components/ui";
 import { ApiError, api, type Schemas } from "@/lib/api";
-import { useMe } from "@/lib/use-me";
+import { nextPath, useMe } from "@/lib/use-me";
 
 type Goal = Schemas["GoalSet"]["goal"];
 type Skill = Schemas["GoalSet"]["weak_skills"][number];
@@ -74,8 +74,8 @@ export default function GoalsPage() {
     setBusy(true);
     setError(null);
     try {
-      await api.goals({ goal, daily_minutes: minutes, weak_skills: skills, interests });
-      router.replace("/panel");
+      const updated = await api.goals({ goal, daily_minutes: minutes, weak_skills: skills, interests });
+      router.replace(nextPath(updated));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Bir sorun oldu, tekrar dene.");
       setBusy(false);
