@@ -17,5 +17,18 @@ class Settings(BaseSettings):
     llm_model_curriculum: str = "claude-sonnet-5-5"
     llm_daily_call_limit_per_user: int = 20
 
+    # Giriş (Technical MVP, Bölüm 5)
+    app_origin: str = "http://localhost:3000"  # magic link bu adrese gider
+    login_token_ttl_minutes: int = 15
+    login_requests_per_hour: int = 5
+    session_ttl_days: int = 30
+    session_cookie_name: str = "session"
+    consent_version: str = "2026-11-v1"
+
+    @property
+    def cookie_secure(self) -> bool:
+        # Yerelde http; diğer tüm ortamlarda çerez yalnızca https üzerinden gider.
+        return self.env != "dev"
+
 
 settings = Settings()

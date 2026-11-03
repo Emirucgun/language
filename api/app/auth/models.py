@@ -47,7 +47,9 @@ class LoginToken(Base):
     __table_args__ = {"schema": LEARNING}
 
     token_hash: Mapped[bytes] = mapped_column(LargeBinary(32), primary_key=True)
-    email: Mapped[str] = mapped_column(CITEXT)
+    email: Mapped[str] = mapped_column(CITEXT, index=True)
+    # Yeni kullanıcıda davet, bağlantıya tıklanınca harcanır (yanlış e-posta daveti yakmaz).
+    invite_code: Mapped[str | None] = mapped_column(ForeignKey(f"{LEARNING}.invites.code"))
     expires_at: Mapped[datetime]
     used_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = created_at_column()
