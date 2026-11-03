@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Button, Card, Loading, Screen } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -19,6 +20,16 @@ const EXTRA = [
 export default function PanelPage() {
   const me = useMe("app");
   const router = useRouter();
+  const [hasReport, setHasReport] = useState(false);
+
+  useEffect(() => {
+    if (!me) return;
+    // Rapor yoksa (ilk hafta) bağlantı hiç görünmez.
+    api
+      .latestReport()
+      .then(() => setHasReport(true))
+      .catch(() => setHasReport(false));
+  }, [me]);
 
   if (!me) return <Screen><Loading /></Screen>;
 
@@ -52,6 +63,16 @@ export default function PanelPage() {
         <span className="font-medium">Planın</span>
         <span className="text-sm text-subtle">8 haftalık yol haritası →</span>
       </Link>
+
+      {hasReport && (
+        <Link
+          href="/report"
+          className="flex min-h-12 items-center justify-between rounded-xl border border-line bg-card px-4 hover:bg-muted"
+        >
+          <span className="font-medium">Haftalık raporun</span>
+          <span className="text-sm text-subtle">bu hafta ne öğrendin →</span>
+        </Link>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Ek çalışma</h2>

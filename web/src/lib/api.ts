@@ -64,6 +64,7 @@ export const api = {
     request<void>("POST", "/api/onboarding/placement/answer", body),
   placementComplete: () =>
     request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
+  latestReport: () => request<Schemas["ReportView"]>("GET", "/api/reports/latest"),
   curriculum: () => request<Schemas["CurriculumView"]>("GET", "/api/curriculum"),
   sessionToday: () => request<SessionView>("GET", "/api/session/today"),
   answer: (activityId: number, body: Schemas["AnswerRequest"]) =>

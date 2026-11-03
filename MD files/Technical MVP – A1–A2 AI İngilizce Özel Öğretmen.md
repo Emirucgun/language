@@ -272,7 +272,16 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Etkisi:** oturum üretimi yeni öğeleri müfredat sırasıyla alır: bu haftanın öğeleri, sonra sonraki haftalar, en son geride kalanlar.
 - **Ekran:** `/curriculum` içindekiler gibi; şu anki hafta işaretli, süre "tahmin" olarak gösterilir (SK6). Panelde "Planın" bağlantısı.
 - **İlk gerçek çalışma (4 Kas 2026):** ilk denemede kurallardan geçti, 9,0 sn, ~$0.02; geliştirme havuzu yalnızca 10 öğe olduğu için haftalar 2'şer öğe. Temalar hedef ve ilgi alanlarıyla uyumlu ("İşimi ve yaşadığım yeri tanıtma", "Sevdiklerim: futbol ve yemek"), son haftalar pekiştirme.
-- **Henüz yok:** pazar günü haftalık yeniden planlama işi (`ensure_curriculum(..., reason="weekly")` hazır; ilerleme verisini prompt'a koymak ve procrastinate işi kaldı).
+- **Haftalık yeniden planlama:** aşağıdaki 6.8.
+
+## 6.8 Haftalık rapor ve yeniden planlama (uygulandı, `api/app/reports/`)
+
+- **Metrikler (`service.py`)**, kullanıcının yerel pazartesi–pazar penceresinde yalnızca olaylardan: aktif gün, tamamlanan oturum, yeni öğe (ilk kez derecelendirilen), kalıcılaşan öğe (Review durumunda ve kararlılık ≥ 7 gün), tekrar başarısı (Hard ve üstü oranı), beceri başına dakika (cevap süreleri; yazma için 1,5 dk tahmin), "anladım" oranı (H5), ek çalışma seçimi (H7), en sık hata (katalog açıklamasıyla). Rapor bir kez yazılır.
+- **Tempo:** başarı < %60 → yavaş (haftalık kapasite × 0,75), ≥ %90 ve ≥ 4 oturum → hızlı (× 1,25), az veride normal.
+- **Yeniden planlama (`weekly.py`):** hafta aktifse müfredat ajanı ilerleme özetiyle yeniden çalışır: derecelendirilmiş olayı olan öğeler havuzdan çıkar, kapasite tempoya göre ayarlanır, `summary_tr` değişikliği ve nedenini söyler (blueprint: "değişiklik nedeniyle birlikte gösterilir"). Hiç gelmeyen kullanıcıya LLM çağrısı yapılmaz; rapor yine yazılır, plan aynı kalır.
+- **İş:** `schedule_weekly_reviews` saatte bir; yerel pazar 20:00 sonrası, raporu olmayan kullanıcılar için kullanıcı + hafta başına tek `weekly_review` işi.
+- **Ekran:** `/report` (tarih aralığı, dört gösterge, beceri dağılımı, en sık hata, plan değişikliği); panelde rapor varsa bağlantı. `GET /api/reports/latest`.
+- **İlk gerçek çalışma (4 Kas 2026):** 8,2 sn, tek Sonnet çağrısı; değişiklik açıklaması somut ve hatalara dayalı. İki ifade sorunu prompt v2'de düzeltilmeli: rapor pazar günü aynı hafta için üretildiği hâlde "geçen hafta" dedi; "artikel" yerine İngilizce "article" kullandı.
 
 ## 7. Arka plan işleri ve zamanlama
 

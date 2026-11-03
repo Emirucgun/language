@@ -30,6 +30,7 @@ from app.llm.prompts import render_static
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
+from app.reports.service import WeeklyMetrics
 
 PROMPT_VERSION = "v1"
 
@@ -69,8 +70,34 @@ def _weak_skills(db: Session, user_id: uuid.UUID) -> list[str]:
     return [str(s) for s in skills]
 
 
-def _task(pool: list[PoolItem], capacity: int, issues: list[str] | None) -> str:
+PACE_FACTOR = {"slow": 0.75, "normal": 1.0, "fast": 1.25}
+
+
+def _progress_lines(progress: WeeklyMetrics) -> list[str]:
+    error = progress.top_error.code if progress.top_error else "none"
+    success = "n/a" if progress.success_rate is None else progress.success_rate
+    return [
+        "This is the WEEKLY REPLAN. Last week's progress:",
+        f"- active days: {progress.active_days}, sessions completed: {progress.sessions_completed}",
+        f"- new items met: {progress.new_items}, consolidated items: {progress.consolidated_items}",
+        f"- review success rate: {success}",
+        f"- pace decided by the app: {progress.pace} (capacity already adjusted)",
+        f"- most frequent error: {error}",
+        "Items the learner has already met are removed from the pool. Plan the next 8 weeks "
+        "from the remaining pool. In summary_tr, first say in one simple Turkish sentence what "
+        "changed in the plan and why, based on this progress.",
+        "",
+    ]
+
+
+def _task(
+    pool: list[PoolItem],
+    capacity: int,
+    issues: list[str] | None,
+    progress: WeeklyMetrics | None = None,
+) -> str:
     lines = [
+        *(_progress_lines(progress) if progress else []),
         f"Weekly capacity (max new items per week): {capacity}",
         f"Pool size: {len(pool)}",
         "Item pool (id | English | Turkish | level):",
@@ -91,8 +118,18 @@ def latest(db: Session, user_id: uuid.UUID) -> Curriculum | None:
 
 
 def ensure_curriculum(
-    db: Session, client: LLMClient, user: User, *, reason: str = "initial"
+    db: Session,
+    client: LLMClient,
+    user: User,
+    *,
+    reason: str = "initial",
+    progress: WeeklyMetrics | None = None,
 ) -> Curriculum:
+    """İlk planı oluşturur ya da (reason != "initial") ilerlemeye göre yeni sürüm üretir.
+
+    Yeniden planlamada görülmüş öğeler havuzdan çıkar ve kapasite tempoya göre ayarlanır:
+    geride kalana tempo düşer, hızlı ilerleyene artar (blueprint, Bölüm 3 "Haftalık").
+    """
     existing = latest(db, user.id)
     if existing is not None and reason == "initial":
         return existing
@@ -100,6 +137,20 @@ def ensure_curriculum(
     start_level, _ = user_level(db, user.id)
     pool = pool_for(db, start_level)
     capacity = weekly_capacity(_new_per_day(user.daily_minutes))
+    if existing is not None:
+        # "Görülmüş" tek doğruluk kaynağından: derecelendirilmiş olayı olan öğe.
+        seen = set(
+            db.scalars(
+                select(Event.item_id).where(
+                    Event.user_id == user.id,
+                    Event.rating.is_not(None),
+                    Event.item_id.is_not(None),
+                )
+            )
+        )
+        pool = [p for p in pool if p.id not in seen]
+    if progress is not None:
+        capacity = max(1, round(capacity * PACE_FACTOR[progress.pace]))
     weights = default_weights(user.goal, _weak_skills(db, user.id))
     snapshot = daily_snapshot(db, user.id)
 
@@ -113,7 +164,7 @@ def ensure_curriculum(
             static_block=render_static("curriculum", PROMPT_VERSION),
             snapshot_id=snapshot.id,
             snapshot_block=snapshot.text,
-            task=_task(pool, capacity, issues),
+            task=_task(pool, capacity, issues, progress),
         )
         try:
             draft, call = generate_structured(
@@ -177,7 +228,7 @@ def new_item_order(curriculum: Curriculum, now: datetime | None = None) -> list[
 
 def view(db: Session, curriculum: Curriculum) -> CurriculumView:
     week_now = current_week(curriculum)
-    texts = dict(db.execute(select(Item.id, Item.text_en)).tuples().all())
+    texts = {item_id: text_en for item_id, text_en in db.execute(select(Item.id, Item.text_en))}
     weeks = [
         WeekView(
             week=w["week"],
