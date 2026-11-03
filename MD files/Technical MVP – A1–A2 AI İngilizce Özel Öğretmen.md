@@ -240,6 +240,14 @@ Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazı
 
 Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent` (taslak KVKK metni), `/onboarding/goals`, `/panel` ("Bugünün oturumu" ve ek çalışmalar; şimdilik yalnızca yazma açık), `/practice/writing` (yaz → ipucu + katalog açıklaması + anladım/anlamadım → yeniden yaz → doğrusu; "sorun var" bağlantısı). Yönlendirme her zaman onam → hedef → panel sırasını zorlar. Tipler FastAPI şemasından üretilir: `npm run gen:api`. Geliştirme içeriği (taslak hata etiketleri, 10 öğe, küçük A1 kelime listesi): `uv run python -m scripts.seed_dev_content`. Yazma görevi şimdilik geçici `GET /api/practice/writing-task` ile gelir; etkinlik üretimi gelince `activity_contents`'ten gelecek.
 
+## 6.4 Etkinlik üretimi (uygulandı, `api/app/sessions/`)
+
+- **Akış (`generation.py`):** tekrar motoru öğeleri seçer (günlük süreye göre en fazla 6 tekrar + 3 yeni; 15 dk) → kısa türlerde (hatırlama, yeni öğe) başkası için üretilmiş onaylı içerik yeniden kullanılır → kalanlar için tek Haiku çağrısı (`prompts/session/v2.md`) → her etkinlik ayrı doğrulanır (`validation.py`) → kalanlar için bir çağrı daha → yine kalırsa LLM'siz şablon (`templates.py`; okuma için şablon yok, oturumdan çıkar). Reddedilen her çıktı `status = rejected` ile saklanır (Işıl'ın denetimi için).
+- **Türler:** yeni öğe (anlam + 2 örnek + kontrol sorusu), hatırlama (3 şıklı boşluk doldurma + Türkçe ipucu), mikro okuma (50–80 kelime + 2 soru), yazma görevi. Dinleme (TTS) ve yazılı diyalog henüz yok.
+- **Değerlendirme (`service.py`):** cevap sunucuda değerlendirilir; öğrenciye giden görünümde cevap yoktur. Derece: yanlış → Again, ipuçlu doğru → Hard, doğru → Good; okuma soruları derecelendirilmez. Aynı soru iki kez sayılmaz. Tüm etkinlikler bitince `session_completed`.
+- **Uç noktalar:** `GET /api/session/today`, `POST /api/activities/{id}/answer`; `POST /api/feedback` oturum etkinliğinde görevi sunucudaki içerikten okur.
+- **İlk gerçek ölçüm (3 Kas 2026, geliştirme içeriğiyle):** oturum başı ~$0.003 (2 Haiku çağrısı; ikincisi önbellekten 2.958 token okudu). Süre ~23 sn: kullanıcı bekletilemez, **gece ön üretimi (procrastinate işi) pilot öncesi şart**. Reddedilen 5 çıktının hepsi seviye kontrolündendi: çekim kuralları (`friends→friend`, `watching→watch`) eklendi ve geliştirme kelime listesi genişletildi; aynı 5 çıktı yeniden doğrulamada geçti. Gerçek seviye listesi (EVP ya da açık frekans listesi) hâlâ açık karar.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |

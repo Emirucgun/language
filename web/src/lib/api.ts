@@ -7,6 +7,10 @@ export type Me = Schemas["Me"];
 export type FeedbackView = Schemas["FeedbackView"];
 export type ShownError = Schemas["ShownError"];
 export type WritingTask = Schemas["WritingTask"];
+export type SessionView = Schemas["SessionView"];
+export type ActivityView = Schemas["ActivityView"];
+export type ChoiceView = Schemas["ChoiceView"];
+export type AnswerResult = Schemas["AnswerResult"];
 
 export class ApiError extends Error {
   constructor(
@@ -50,8 +54,14 @@ export const api = {
   writingTask: () => request<WritingTask>("GET", "/api/practice/writing-task"),
   feedback: (body: Schemas["WritingRequest"]) =>
     request<FeedbackView>("POST", "/api/feedback", body),
-  rewrite: (feedbackId: number, text: string) =>
-    request<Schemas["RewriteResult"]>("POST", `/api/feedback/${feedbackId}/rewrite`, { text }),
+  rewrite: (feedbackId: number, text: string, activityId?: number) =>
+    request<Schemas["RewriteResult"]>("POST", `/api/feedback/${feedbackId}/rewrite`, {
+      text,
+      activity_id: activityId ?? null,
+    }),
+  sessionToday: () => request<SessionView>("GET", "/api/session/today"),
+  answer: (activityId: number, body: Schemas["AnswerRequest"]) =>
+    request<AnswerResult>("POST", `/api/activities/${activityId}/answer`, body),
   event: (body: Schemas["ClientEvent"]) => request<Schemas["Recorded"]>("POST", "/api/events", body),
 };
 

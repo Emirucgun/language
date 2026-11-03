@@ -35,10 +35,14 @@ export default function PanelPage() {
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-subtle">Önerilen</span>
         </div>
         <p className="text-sm text-subtle">
-          Günlük oturumun {me.daily_minutes ?? 15} dakikalık olacak. Oturum üretimi henüz hazır değil;
-          şimdilik aşağıdan yazma pratiği yapabilirsin.
+          Senin için seçilen yeni ve tekrar öğeleri, yaklaşık {me.daily_minutes ?? 15} dakika.
         </p>
-        <Button disabled>Yakında</Button>
+        <Link
+          href="/session"
+          className="flex min-h-12 items-center justify-center rounded-xl bg-foreground px-4 font-medium text-background hover:opacity-90"
+        >
+          Başla
+        </Link>
       </Card>
 
       <section className="flex flex-col gap-3">

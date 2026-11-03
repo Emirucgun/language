@@ -126,6 +126,18 @@ def test_level_allows_targets_and_names() -> None:
     assert [i.code for i in result.issues] == ["out_of_level"]
 
 
+@pytest.mark.parametrize(
+    "inflected", ["teachers", "works", "goes", "working", "liked", "bigger", "cities"]
+)
+def test_regular_inflections_are_in_level(inflected: str) -> None:
+    lexicon = Lexicon(frozenset({"teacher", "work", "go", "like", "big", "city"}))
+    assert lexicon.out_of_level(inflected) == []
+
+
+def test_unknown_stems_are_still_out_of_level() -> None:
+    assert Lexicon(frozenset({"work"})).out_of_level("chefs cooking") == ["chefs", "cooking"]
+
+
 def test_target_item_must_appear_including_chunks() -> None:
     result = ValidationResult()
     check_target_used("I go to school every day.", ["every day"], result)

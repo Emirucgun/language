@@ -58,6 +58,33 @@ def _proper_nouns(text: str) -> set[str]:
     return names
 
 
+def base_forms(word: str) -> set[str]:
+    """Düzenli çekimlerden olası kök biçimler: friends→friend, watching→watch, lived→live.
+
+    Bilerek basit: yalnızca düzenli -s/-es/-ies, -ing, -ed, -er/-est. Düzensiz biçimler
+    (went, children) listede açıkça bulunmalı. Fazla aday üretmek zararsız; yalnızca
+    sözlükte olanlar kabul edilir.
+    """
+    candidates = {word, word.split("'")[0]}  # don't, it's, Ali's
+    for suffix, replacements in (
+        ("ies", ("y",)),
+        ("es", ("", "e")),
+        ("s", ("",)),
+        ("ied", ("y",)),
+        ("ed", ("", "e")),
+        ("ing", ("", "e")),
+        ("est", ("", "e")),
+        ("er", ("", "e")),
+    ):
+        if word.endswith(suffix) and len(word) >= len(suffix) + 2:  # kök en az 2 harf: goes→go
+            stem = word[: -len(suffix)]
+            candidates.update(stem + r for r in replacements)
+            # Çift ünsüz: running→run, stopped→stop, bigger→big
+            if len(stem) >= 3 and stem[-1] == stem[-2]:
+                candidates.add(stem[:-1])
+    return candidates
+
+
 @dataclass(frozen=True, slots=True)
 class Lexicon:
     """Seviyeye izin verilen tüm biçimler (lemma + çekimler)."""
@@ -68,8 +95,7 @@ class Lexicon:
         allowed = self.forms | {w.lower() for w in also_allowed} | _proper_nouns(text)
         unknown: list[str] = []
         for word in words(text):
-            base = word.split("'")[0]  # don't, it's, Ali's
-            if word not in allowed and base not in allowed and word not in unknown:
+            if allowed.isdisjoint(base_forms(word)) and word not in unknown:
                 unknown.append(word)
         return unknown
 

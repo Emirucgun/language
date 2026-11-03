@@ -58,6 +58,12 @@ def test_feedback_static_block_is_cacheable_and_stable() -> None:
     assert estimate_tokens(first) >= 600
 
 
+def test_session_static_block_is_cacheable() -> None:
+    static = render_static("session", "v2")
+    assert estimate_tokens(static) >= 600
+    assert "Can," not in static  # v2: modal "can" ile karışan isim çıktı
+
+
 def test_missing_placeholder_is_an_error() -> None:
     with pytest.raises(KeyError):
         render_static("feedback", "v1")

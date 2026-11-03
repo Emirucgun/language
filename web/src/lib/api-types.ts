@@ -162,6 +162,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/session/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Today
+         * @description Gece işi gelene kadar oturum ilk istekte üretilir (birkaç saniye sürebilir).
+         */
+        get: operations["today_api_session_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/activities/{activity_id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Answer */
+        post: operations["post_answer_api_activities__activity_id__answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/practice/writing-task": {
         parameters: {
             query?: never;
@@ -200,6 +237,67 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActivityView */
+        ActivityView: {
+            /** Id */
+            id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "recall" | "new_item" | "reading" | "writing";
+            /** Recommended */
+            recommended: boolean;
+            /** Done */
+            done: boolean;
+            /** Hint Tr */
+            hint_tr?: string | null;
+            /** Meaning Tr */
+            meaning_tr?: string | null;
+            /** Item En */
+            item_en?: string | null;
+            /** Examples */
+            examples?: components["schemas"]["Example"][] | null;
+            /** Text En */
+            text_en?: string | null;
+            /** Task Tr */
+            task_tr?: string | null;
+            /**
+             * Questions
+             * @default []
+             */
+            questions: components["schemas"]["ChoiceView"][];
+        };
+        /** AnswerRequest */
+        AnswerRequest: {
+            /** Question Id */
+            question_id: string;
+            /** Answer */
+            answer: string;
+            /**
+             * Hinted
+             * @default false
+             */
+            hinted: boolean;
+            /** Duration Ms */
+            duration_ms?: number | null;
+        };
+        /** AnswerResult */
+        AnswerResult: {
+            /** Correct */
+            correct: boolean;
+            /** Correct Answer */
+            correct_answer: string;
+        };
+        /** ChoiceView */
+        ChoiceView: {
+            /** Id */
+            id: string;
+            /** Prompt */
+            prompt: string;
+            /** Options */
+            options: string[];
+        };
         /** ClientEvent */
         ClientEvent: {
             /** Type */
@@ -224,6 +322,13 @@ export interface components {
             is_adult_confirmed: true;
             /** Display Name */
             display_name?: string | null;
+        };
+        /** Example */
+        Example: {
+            /** En */
+            en: string;
+            /** Tr */
+            tr: string;
         };
         /**
          * FeedbackView
@@ -312,6 +417,17 @@ export interface components {
             /** Correction */
             correction: string | null;
         };
+        /** SessionView */
+        SessionView: {
+            /** Id */
+            id: number;
+            /** Local Date */
+            local_date: string;
+            /** Status */
+            status: string;
+            /** Activities */
+            activities: components["schemas"]["ActivityView"][];
+        };
         /** ShownError */
         ShownError: {
             /** Code */
@@ -345,14 +461,14 @@ export interface components {
         };
         /** WritingRequest */
         WritingRequest: {
-            /** Task */
-            task: string;
-            /** Target Item Ids */
-            target_item_ids: number[];
             /** Text */
             text: string;
             /** Activity Id */
             activity_id?: number | null;
+            /** Task */
+            task?: string | null;
+            /** Target Item Ids */
+            target_item_ids?: number[] | null;
         };
         /** WritingTask */
         WritingTask: {
@@ -668,6 +784,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Recorded"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    today_api_session_today_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_answer_api_activities__activity_id__answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerResult"];
                 };
             };
             /** @description Validation Error */

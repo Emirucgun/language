@@ -49,4 +49,7 @@ train plane bike family mother father brother sister friend son daughter wife hu
 child children man woman people teacher student doctor driver job name food water coffee
 tea milk bread cheese egg eggs fruit apple breakfast lunch dinner book phone money music
 film football game sport weather sun rain holiday weekend
+pizza pasta soup rice chicken fish meat salad cake sandwich restaurant cafe menu chef nurse
+engineer waiter manager boss team match goal player ball club life lot week favourite
+beautiful busy free tired hungry great fun nice every each other some team park beach sea
 """
