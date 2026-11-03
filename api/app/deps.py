@@ -10,7 +10,7 @@ from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.email import ConsoleEmailSender, EmailSender
+from app.auth.email import EmailSender, sender_from_settings
 from app.auth.models import AuthSession, User
 from app.config import settings
 from app.db import SessionLocal
@@ -39,7 +39,7 @@ def get_llm_client() -> LLMClient:
 
 
 def get_email_sender() -> EmailSender:
-    return ConsoleEmailSender()
+    return sender_from_settings()
 
 
 def hash_secret(value: str) -> bytes:

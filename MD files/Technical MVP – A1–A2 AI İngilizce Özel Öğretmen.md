@@ -327,7 +327,7 @@ Proje bağımlılıkları (`next`, `fastapi` vb.) iskelet kurulurken `npm` ve `u
 | --- | --- | --- | --- |
 | ~~LLM sağlayıcısı~~ | **Karar verildi (3 Kas 2026):** Anthropic Claude API, Sonnet 5.5 + Haiku 5.5 | Bkz. Bölüm 6.1 | — |
 | TTS sağlayıcısı | Ayrı TTS servisi (Anthropic TTS sunmuyor) | Ses kalitesi (yavaş, net İngilizce), fiyat, AB | Hafta 3 |
-| E-posta servisi | AB'de işleyen transactional servisler | Teslim oranı, ücretsiz kota, DPA | Hafta 2 (giriş akışından önce) |
+| ~~E-posta servisi~~ | **Karar verildi (4 Kas 2026):** Brevo (Fransa, AB'de işleme; günde 300 ücretsiz). Kod yalnızca SMTP konuşur (`app/auth/email.py`), sağlayıcı bir ayardır. **Açık:** gönderim için alan adı + SPF/DKIM (proje adı kararıyla birlikte); alan adı olmadan e-postalar spam'e düşer | — | Alfa öncesi |
 | Barındırma | Tek platformda API + worker + Postgres (AB) ve arayüz için Next.js uyumlu AB bölgesi | Kurulum kolaylığı, maliyet, AB, yedekleme | Alfa öncesi (~Hafta 9) |
 | ~~İzinli kelime listesi kaynağı~~ | **Karar verildi (3 Kas 2026):** CEFR-J Wordlist 1.6 | Bkz. Bölüm 6 | — |
 | Proje adı / alan adı | — | — | Barındırmadan önce |

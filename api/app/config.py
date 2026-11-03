@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     session_cookie_name: str = "session"
     consent_version: str = "2026-11-v1"
 
+    # E-posta (Brevo SMTP; sağlayıcıdan bağımsız). smtp_host boşsa bağlantı loga yazılır.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: SecretStr | None = None
+    mail_from: str = "giris@example.com"  # doğrulanmış alan adından olmalı (SPF/DKIM)
+    mail_from_name: str = "İngilizce Öğretmenim"
+
     @property
     def cookie_secure(self) -> bool:
         # Yerelde http; diğer tüm ortamlarda çerez yalnızca https üzerinden gider.

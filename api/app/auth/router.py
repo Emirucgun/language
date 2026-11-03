@@ -15,7 +15,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from app.auth.email import EmailSender
+from app.auth.email import EmailSender, EmailSendError
 from app.auth.models import AuthSession, Invite, LoginToken, User
 from app.config import settings
 from app.deps import CurrentUser, Db, get_email_sender, hash_secret
@@ -104,9 +104,15 @@ def request_login(
         )
     )
     db.flush()
-    sender.send_login_link(
-        body.email, f"{settings.app_origin}/auth/verify?{urlencode({'token': token})}"
-    )
+    try:
+        sender.send_login_link(
+            body.email, f"{settings.app_origin}/auth/verify?{urlencode({'token': token})}"
+        )
+    except EmailSendError as exc:
+        # İstek geri alınır (token kaydedilmez); kullanıcı gelmeyecek bir e-postayı beklemesin.
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, "E-posta gönderilemedi, birazdan tekrar dene."
+        ) from exc
     return {"ok": True}
 
 
