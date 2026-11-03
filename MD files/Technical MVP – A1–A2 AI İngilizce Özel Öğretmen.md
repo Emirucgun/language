@@ -236,6 +236,10 @@ Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazı
 
 **Altın set.** `eval/golden/` altında Işıl'ın etiketlediği ~100 cümle (JSONL). `uv run python -m eval.golden --purpose feedback` komutu blueprint Bölüm 7'deki beş ölçütü raporlar. Prompt ya da model değişikliği bu rapor olmadan birleştirilmez.
 
+## 6.3 Arayüz (uygulandı, `web/`)
+
+Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent` (taslak KVKK metni), `/onboarding/goals`, `/panel` ("Bugünün oturumu" ve ek çalışmalar; şimdilik yalnızca yazma açık), `/practice/writing` (yaz → ipucu + katalog açıklaması + anladım/anlamadım → yeniden yaz → doğrusu; "sorun var" bağlantısı). Yönlendirme her zaman onam → hedef → panel sırasını zorlar. Tipler FastAPI şemasından üretilir: `npm run gen:api`. Geliştirme içeriği (taslak hata etiketleri, 10 öğe, küçük A1 kelime listesi): `uv run python -m scripts.seed_dev_content`. Yazma görevi şimdilik geçici `GET /api/practice/writing-task` ile gelir; etkinlik üretimi gelince `activity_contents`'ten gelecek.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |

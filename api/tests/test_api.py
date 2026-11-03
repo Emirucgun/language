@@ -248,6 +248,17 @@ def test_feedback_and_rewrite(
     assert r.status_code == 404
 
 
+def test_writing_task_returns_a_real_item(
+    client: TestClient, sender: FakeSender, engine: object, item_id: int
+) -> None:
+    _login(client, sender, engine)
+    _consent(client)
+    r = client.get("/api/practice/writing-task")
+    assert r.status_code == 200, r.text
+    task = r.json()
+    assert len(task["target_item_ids"]) == 1 and task["item_en"] in task["task"]
+
+
 # --- İstemci olayları --------------------------------------------------------
 
 

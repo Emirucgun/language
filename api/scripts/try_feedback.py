@@ -25,17 +25,7 @@ from app.feedback.service import give_feedback  # noqa: E402
 from app.llm.client import AnthropicClient  # noqa: E402
 from app.llm.models import LlmCall  # noqa: E402
 from app.validator.core import Lexicon, words  # noqa: E402
-
-ERROR_TAGS = [
-    ("ARTICLE", "Artikel eksik ya da fazla", "Tekil sayılabilen isimden önce a/an gelir."),
-    ("SUBJECT", "Özne eksik", "İngilizcede cümlenin öznesi düşmez: It is, She is."),
-    ("BE_VERB", "Be fiili eksik ya da yanlış", "İsim cümlelerinde am/is/are gerekir."),
-    ("WORD_ORDER", "Kelime sırası", "İngilizcede sıra genelde özne + fiil + nesnedir."),
-    ("PREPOSITION", "Edat seçimi", "Gün için on, saat için at, şehir için in kullanılır."),
-    ("PLURAL", "Çoğul / sayılabilirlik", "Birden fazla sayılabilen isim -s alır."),
-    ("TENSE", "Zaman ya da üçüncü tekil -s", "He/she/it ile geniş zamanda fiil -s alır."),
-    ("OTHER", "Diğer", "Bu hata kataloğun dışında."),
-]
+from scripts.dev_content import ERROR_TAGS  # noqa: E402
 
 # (görev, hedef öğe, öğrencinin cümlesi)
 SAMPLES = [

@@ -20,3 +20,6 @@ __pycache__/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Üretilen API şeması (tipler src/lib/api-types.ts'te)
+web/openapi.json
