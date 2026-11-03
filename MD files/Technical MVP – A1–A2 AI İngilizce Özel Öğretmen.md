@@ -206,6 +206,8 @@ Başlangıç noktası Hermes Agent: kısa bir hafıza dosyası oturum başında 
    - Doğrulanmış kısa etkinlikler (hatırlama, yeni öğe sunumu) aynı öğe + seviye + ilgi alanı için yeniden kullanılır; üretimden önce `activity_contents` aranır. Aynı kişiye aynı içerik gösterilmez. Okuma, diyalog ve geri bildirim her zaman kişiye özel üretilir.
    - Hatırlama soruları gerektiğinde `reference_sentences`'tan LLM'siz şablonla üretilir.
 
+**Uygulama (`api/app/llm/`):** `purposes.py` (amaç → model, `max_tokens`, `effort`, Sonnet rotalarında sunucu tarafı ret yedeği), `client.py` (`LLMClient` arayüzü, Anthropic adaptörü, önbellek kırılma noktaları), `service.py` (`generate_structured`: günlük limit, e-posta koruması, `llm_calls` kaydı ve maliyet; hata istisna değil `None` döner), `snapshot.py` (öğrenci özeti), `prompts/<amaç>/<sürüm>.md`. İlk kullanıcı yazma geri bildirimi: `feedback/llm_schema.py` + `prompts/feedback/v1.md`. Katalogda `OTHER` kodunun bulunması gerekir (içerik tohumlaması).
+
 Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazılı diyalog 4–6 turla sınırlı ve yalnızca eklenir. Gece üretimi için Batch API sonraki optimizasyondur. Her çağrının cache okuma/yazma token'ları `llm_calls`'a yazılır; cache'in tuttuğu buradan izlenir.
 
 **CTO notu – oturumu tek çağrıda üretmek.** Blueprint "bugünün oturumu tek çağrıyla" diyor. Uzun çıktıda tek bir etkinlik doğrulamadan kalırsa tüm oturumu çöpe atmak pahalıdır. Uygulama şöyle olacak: tek çağrı tüm oturumu üretir, ama doğrulama **etkinlik bazında** yapılır; kalan etkinlikler yalnızca kendileri için yeniden üretilir, ikinci kez kalırsa yedek şablona düşer. Gece üretimi sorunsuz olduğu sürece kullanıcı bunu hissetmez.
