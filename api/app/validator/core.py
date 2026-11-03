@@ -106,6 +106,7 @@ def load_lexicon(session: Session, levels: tuple[str, ...] = ("A1", "A2")) -> Le
         select(VocabAllowlist.lemma, VocabAllowlist.forms).where(VocabAllowlist.cefr.in_(levels))
     ):
         forms.add(lemma.lower())
+        forms.update(words(lemma))  # çok kelimeli girdiler: "a lot" → a, lot
         forms.update(f.lower() for f in extra)
     for text_en, extra in session.execute(
         select(Item.text_en, Item.forms).where(Item.cefr.in_(levels), Item.active)

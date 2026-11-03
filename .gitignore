@@ -23,3 +23,6 @@ Thumbs.db
 
 # Üretilen API şeması (tipler src/lib/api-types.ts'te)
 web/openapi.json
+
+# Lisanslı kaynak dosyalar (yeniden dağıtım izni açık değil; içe aktarma betiği indirir)
+content/sources/

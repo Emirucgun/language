@@ -73,6 +73,12 @@ export default function PanelPage() {
       <Button variant="ghost" onClick={logout} className="self-start">
         Çıkış yap
       </Button>
+
+      {/* Lisans koşulu: CEFR-J kullanımı atıf gerektirir. */}
+      <p className="mt-auto text-xs text-subtle">
+        Kelime seviyeleri: CEFR-J Wordlist Version 1.6, Tono Laboratuvarı, Tokyo Yabancı Diller
+        Üniversitesi.
+      </p>
     </Screen>
   );
 }

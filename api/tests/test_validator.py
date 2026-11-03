@@ -205,3 +205,16 @@ def test_lexicon_loads_allowlist_and_item_forms(migrated_db: Config) -> None:
     engine.dispose()
     assert {lemma, lemma + "s", lemma + "x", lemma + "ed"} <= lexicon.forms
     assert lemma + "b2" not in lexicon.forms
+
+
+def test_multiword_allowlist_entries_contribute_their_words(migrated_db: Config) -> None:
+    phrase = "zz" + "".join(chr(97 + int(c, 16)) for c in uuid.uuid4().hex[:6])
+    with psycopg.connect(_libpq_url("TEST_DATABASE_URL")) as conn:
+        conn.execute(
+            "INSERT INTO content.vocab_allowlist (lemma, cefr, source) VALUES (%s, 'A1', 'test')",
+            (f"a {phrase}",),
+        )
+    engine = create_engine(os.environ["TEST_APP_DATABASE_URL"])
+    with Session(engine) as session:
+        assert phrase in load_lexicon(session).forms
+    engine.dispose()

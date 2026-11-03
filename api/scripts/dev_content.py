@@ -28,28 +28,4 @@ ITEMS = [
     ("word", "favourite", "en sevdiği", ["favorite"]),
     ("chunk", "there is", "var (tekil)", ["there's"]),
 ]
-
-# Küçük A1 temel kelime listesi (yalnızca geliştirme; gerçek liste açık karar).
-A1_WORDS = """
-a an the i you he she it we they me him her us them my your his its our their this that
-these those is am are was were be been do does did have has had can will not no yes and
-or but because so very too also only all some any many much more most one two three four
-five first last next new old good bad big small long short hot cold nice happy sad easy
-hard here there where when what who how why which now today tomorrow yesterday always
-usually often sometimes never morning afternoon evening night day week month year time
-monday tuesday wednesday thursday friday saturday sunday at in on to from with for of
-about after before by up down out go goes went come comes came get gets got make makes
-made take takes took see sees saw know knows knew think thinks want wants like likes love
-loves live lives work works play plays read reads write writes eat eats ate drink drinks
-cook cooks watch watches listen listens speak speaks talk talks walk walks run runs drive
-drives buy buys pay pays study studies learn learns teach teaches help helps open close
-start finish stay visit visits travel travels sleep sleeps wake wakes
-home house room kitchen school work office shop market city town country street car bus
-train plane bike family mother father brother sister friend son daughter wife husband
-child children man woman people teacher student doctor driver job name food water coffee
-tea milk bread cheese egg eggs fruit apple breakfast lunch dinner book phone money music
-film football game sport weather sun rain holiday weekend
-pizza pasta soup rice chicken fish meat salad cake sandwich restaurant cafe menu chef nurse
-engineer waiter manager boss team match goal player ball club life lot week favourite
-beautiful busy free tired hungry great fun nice every each other some team park beach sea
-"""
+# Seviye sözlüğü artık CEFR-J'den gelir: scripts/import_cefrj.py

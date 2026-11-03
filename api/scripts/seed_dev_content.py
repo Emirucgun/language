@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-from scripts.dev_content import A1_WORDS, ERROR_TAGS, ITEMS
+from scripts.dev_content import ERROR_TAGS, ITEMS
 
 load_dotenv()
 
@@ -28,14 +28,6 @@ def main() -> None:
                 ),
                 {"c": code, "n": name, "e": explanation},
             )
-        for word in sorted(set(A1_WORDS.split())):
-            conn.execute(
-                text(
-                    "INSERT INTO content.vocab_allowlist (lemma, cefr, source) "
-                    "VALUES (:w, 'A1', 'dev-seed') ON CONFLICT DO NOTHING"
-                ),
-                {"w": word},
-            )
         existing = set(
             conn.scalars(text("SELECT text_en FROM content.items WHERE pool_version = 'dev-seed'"))
         )
@@ -50,7 +42,8 @@ def main() -> None:
                 {"k": kind, "en": en, "tr": tr, "f": forms},
             )
     engine.dispose()
-    print(f"{len(ERROR_TAGS)} hata etiketi, {len(ITEMS)} öğe, kelime listesi yüklendi.")
+    print(f"{len(ERROR_TAGS)} hata etiketi, {len(ITEMS)} öğe yüklendi.")
+    print("Seviye sözlüğü için: uv run python -m scripts.import_cefrj")
 
 
 if __name__ == "__main__":

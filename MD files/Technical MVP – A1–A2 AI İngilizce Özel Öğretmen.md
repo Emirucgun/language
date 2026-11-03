@@ -232,7 +232,7 @@ Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazı
 
 **Geri bildirim akışı (uygulandı, `api/app/feedback/service.py`):** `give_feedback` öğrencinin metnini `writing_submitted` olayı olarak yazar → günün donmuş öğrenci özetiyle Sonnet'e sorar → doğrulayıcıdan geçirir → `feedbacks` + `error_marks` kaydeder. Geçerse birincil hedef öğe için `writing_assessed` olayı (doğru → Good, yanlış → Again) yazılır ve tekrar motoru güncellenir; geçmezse (limit, API hatası, ret, doğrulayıcı) öğrenci "şimdilik atladık" görür, öğrenci modeli değişmez. Doğru cümle yalnızca `submit_rewrite` ile, yeniden yazmadan sonra döner. Bekleyen (`deferred`/`rejected`) geri bildirimleri yeniden işleyen iş henüz yok.
 
-İzinli kelime listesinin kaynağı EVP lisans sonucuna bağlı (Faz 0). Lisans uygun değilse açık bir frekans listesi + Işıl'ın havuzu ile kendi listemiz türetilir. Lemmatizasyon MVP'de basit tutulur; yetmezse spaCy değerlendirilir.
+**Seviye listesi (karar, 3 Kas 2026): CEFR-J Wordlist Version 1.6** (Tono Laboratuvarı, Tokyo Yabancı Diller Üniversitesi). Resmi sayfaya göre atıfla araştırma ve ticari kullanım ücretsiz, türetilmiş liste serbest. EVP elendi: ticari kullanım yazılı izin gerektiriyor. İçe aktarma `scripts/import_cefrj.py`: 7.035 kelime (A1 1.088, A2 1.272, B1 2.178, B2 2.497), kelime başına en düşük seviye; düzensiz biçimler (went, children, better) içe aktarmada lemminflect (MIT) ile üretilir, doğrulayıcı düzenli ekleri ayrıca çözer. Doğrulayıcı A1+A2'yi kullanır. Kaynak dosya depoya konmaz (yeniden dağıtım açıkça düzenlenmemiş); atıf panelde ve README'de.
 
 **Altın set.** `eval/golden/` altında Işıl'ın etiketlediği ~100 cümle (JSONL). `uv run python -m eval.golden --purpose feedback` komutu blueprint Bölüm 7'deki beş ölçütü raporlar. Prompt ya da model değişikliği bu rapor olmadan birleştirilmez.
 
@@ -253,7 +253,7 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Kuyruk:** procrastinate, kendi `procrastinate` şemasında (göç 0003; bağlantı `search_path` ile görür). Worker: `uv run python -m app.worker` (Windows'ta psycopg'nin asenkron modu için Selector döngüsü açıkça seçilir).
 - **İşler (`app/jobs.py`):** `schedule_sessions` 15 dakikada bir çalışır ve `app/sessions/scheduling.py` kuralıyla seçilen kullanıcılar için `generate_session` işini kuyruğa koyar (kullanıcı + gün başına tek iş, `queueing_lock`). `generate_session` 3 deneme hakkıyla `ensure_session`'ı çağırır; tekrar çalışması LLM'e ikinci kez gitmez.
 - **Seçim kuralı:** yerel saat 03:00'ü geçmiş, onam + hedef tamam, son 7 günde aktif (ya da yeni kayıt) ve bugünün oturumu hazır değil. 7 günden uzun süredir gelmeyen kullanıcıya para harcanmaz; döndüğünde oturum istek anında üretilir.
-- **İlk gerçek çalışma (3 Kas 2026):** yeni bir kullanıcı için oturum arka planda 16,6 sn'de üretildi (2 Haiku çağrısı), öğrenci beklemedi. Ancak oturum zayıf çıktı (4 etkinlik, 2'si şablon, okuma yok): reddedilen 7 çıktının hepsi seviye kontrolündendi (cat, near, museum, flat, things...). **Darboğaz artık gerçek seviye kelime listesi**; geliştirme listesi çok küçük. Bu karar (Bölüm 10) öne çekilmeli.
+- **İlk gerçek çalışma (3 Kas 2026):** yeni bir kullanıcı için oturum arka planda 16,6 sn'de üretildi (2 Haiku çağrısı), öğrenci beklemedi. Ancak oturum zayıf çıktı (4 etkinlik, 2'si şablon, okuma yok): reddedilen 7 çıktının hepsi seviye kontrolündendi (cat, near, museum, flat, things...). Neden küçük geliştirme listesiydi. **CEFR-J'ye geçince** aynı profil (seyahat, yemek + müzik) için oturum tek Haiku çağrısında, 10,9 sn'de, $0.0011'e, 0 ret ile üretildi: 5 etkinliğin hepsi LLM'den, okuma dahil. Önceki 12 ret yeniden doğrulandı: 9'u geçti, kalan 3'ü gerçekten B1 kelimeler (jazz, spicy, strawberries).
 
 ## 7. Arka plan işleri ve zamanlama
 
@@ -301,7 +301,7 @@ Proje bağımlılıkları (`next`, `fastapi` vb.) iskelet kurulurken `npm` ve `u
 | TTS sağlayıcısı | Ayrı TTS servisi (Anthropic TTS sunmuyor) | Ses kalitesi (yavaş, net İngilizce), fiyat, AB | Hafta 3 |
 | E-posta servisi | AB'de işleyen transactional servisler | Teslim oranı, ücretsiz kota, DPA | Hafta 2 (giriş akışından önce) |
 | Barındırma | Tek platformda API + worker + Postgres (AB) ve arayüz için Next.js uyumlu AB bölgesi | Kurulum kolaylığı, maliyet, AB, yedekleme | Alfa öncesi (~Hafta 9) |
-| İzinli kelime listesi kaynağı | EVP (lisans uygunsa) ya da açık frekans listesi + kendi havuzumuz | Lisans | Faz 0 / Hafta 1–2 |
+| ~~İzinli kelime listesi kaynağı~~ | **Karar verildi (3 Kas 2026):** CEFR-J Wordlist 1.6 | Bkz. Bölüm 6 | — |
 | Proje adı / alan adı | — | — | Barındırmadan önce |
 
 ## 11. Teknik yapım sırası (ilk adımlar)
