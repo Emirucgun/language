@@ -5,6 +5,9 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
+from app.db import CONTENT, LEARNING
+from app.models import Base
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -18,16 +21,15 @@ if config.config_file_name is not None:
 load_dotenv()
 config.set_main_option("sqlalchemy.url", os.environ["MIGRATIONS_DATABASE_URL"])
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
+MANAGED_SCHEMAS = {CONTENT, LEARNING}
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def include_name(name: str | None, type_: str, parent_names: object) -> bool:
+    # Yalnızca kendi şemalarımız; procrastinate kendi tablolarını yönetir.
+    if type_ == "schema":
+        return name in MANAGED_SCHEMAS
+    return True
 
 
 def run_migrations_offline() -> None:
@@ -46,6 +48,8 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_schemas=True,
+        include_name=include_name,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -68,7 +72,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            include_name=include_name,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

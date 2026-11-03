@@ -85,27 +85,43 @@ Blueprint'teki "iki veri deposu" (içerik deposu ve olay/öğrenci deposu) MVP'd
 4. Hangi öğenin çalışılacağına yalnızca `scheduler` karar verir; etkinlik üretimi bu listeyi girdi olarak alır, değiştiremez.
 5. Model adı, prompt sürümü ve doğrulayıcı sonucu her üretimle birlikte saklanır.
 
-## 4. Veri modeli (ilk sürüm)
+## 4. Veri modeli (sürüm 1, 3 Kas 2026)
 
-Blueprint Bölüm 5'teki varlıkların tablo karşılığı. Alan adları kodda İngilizce olur.
+Üç kural: **(1)** olay bir kez yazılır, türev tablolar olaylardan yeniden üretilebilir; **(2)** her bilgi tek yerde durur, başka tablolar ona referans verir (kopya yok); **(3)** LLM'in o an ne gördüğü her zaman yeniden kurulabilir (prompt dosyası sürümü + öğrenci özeti + görev girdisi). Alan adları kodda İngilizce.
 
-| Tablo | Şema | Ana alanlar | Not |
-| --- | --- | --- | --- |
-| `users` | learning | id (UUID), email, display_name, goal, daily_minutes, interests (jsonb), timezone, is_adult_confirmed, consent_at, consent_version, started_at, deleted_at | LLM'e yalnızca `id` gider |
-| `invites` | learning | code, created_by, used_by, used_at | Pilot davet kapısı |
-| `login_tokens` | learning | token_hash, user_id/email, expires_at, used_at | 15 dk geçerli, tek kullanımlık; düz token saklanmaz |
-| `items` | content | id, kind (word/chunk/structure), text_en, text_tr, cefr (A1/A2…), sublevel, source_list, error_risk_notes, reference_sentences (jsonb), pool_version, active | Seviye bir sütundur (VY11) |
-| `error_tags` | content | code, name_tr, explanation_tr, l1_related, examples (jsonb), version | Sabit küme; LLM yalnızca bu kodlardan seçer |
-| `fixed_tests` | content | id, purpose (placement/pre/post/retention), version, questions (jsonb) | **Ekleme**, bkz. not aşağıda |
-| `curricula` | learning | user_id, version, weeks (jsonb), skill_weights, change_reason, proposed_by_model, prompt_version, validated_at | Her yeniden plan yeni satır |
-| `events` | learning | id (bigserial), user_id, occurred_at, type, item_id, activity_id, result, duration_ms, payload (jsonb), schema_version | Append-only |
-| `activities` | learning | id, user_id, kind, item_ids, content (jsonb), audio_keys, model, prompt_version, is_recommended, origin (session/extra), validator_result (jsonb), flagged_issue, created_at | Üretilen her şey tam metin |
-| `item_states` | learning | user_id, item_id, stability, difficulty, last_review, due, retrievability, reps, lapses | Türev; FSRS yazar |
-| `error_records` | learning | event_id, tag_code, span, sentence, correction, student_reaction | Hata örüntüleri buradan |
-| `weekly_reports` | learning | user_id, week_start, metrics (jsonb), focus, generated_at | Türev; yeniden üretilebilir |
-| `llm_calls` | learning | id, user_id, purpose, provider, model, prompt_version, input_tokens, output_tokens, latency_ms, status, cost_estimate, created_at | **Ekleme.** Maliyet, günlük limit ve gecikme ölçümü buradan |
+**`content` şeması** (küratörlü, sürümlü; uygulama rolü yalnızca okur)
 
-**Olay türleri (ilk sürüm):** `consent_given`, `goal_set`, `placement_answer`, `placement_completed`, `curriculum_created`, `curriculum_replanned`, `activity_shown`, `answer_submitted`, `writing_submitted`, `feedback_shown`, `feedback_reaction` (anladım/anlamadım, H5), `rewrite_submitted`, `activity_flagged`, `session_completed`, `extra_activity_chosen` (öneri vs. seçim, H7), `report_viewed`, `nps_submitted` (H6). Her olay `schema_version` taşır; payload şeması Pydantic ile doğrulanır.
+| Tablo | Ana alanlar | Not |
+| --- | --- | --- |
+| `items` | id, pool_version, kind (word/chunk/structure), text_en, text_tr, cefr, sublevel, forms[], topics[], source_list, error_risk_notes, reference_sentences (jsonb), active | Seviye bir sütun (VY11); `forms` doğrulayıcı için çekimli biçimler |
+| `vocab_allowlist` | lemma, cefr, forms[], source | Doğrulayıcının seviye dışı kelime kontrolü |
+| `error_tags` | code, name_tr, explanation_tr, hint_template_tr, l1_related, examples (jsonb), version, active | Türkçe açıklamanın **tek** kaynağı; LLM yalnızca kod seçer |
+| `fixed_tests` | id, purpose (placement/pre/post/retention), version, questions (jsonb), approved_by, approved_at | Ölçüm testleri canlı üretilmez (aşağıdaki not) |
+
+**`learning` şeması**
+
+| Tablo | Ana alanlar | Not |
+| --- | --- | --- |
+| `users` | id (UUID), email (citext), display_name, goal, daily_minutes, interests[], timezone, is_adult_confirmed, consent_version, consent_at, created_at, deleted_at | LLM'e hiçbir alanı gitmez |
+| `invites`, `login_tokens`, `auth_sessions` | kod / token hash'i, son geçerlilik, kullanım ya da iptal zamanı | Düz token saklanmaz |
+| `curricula` | user_id, version, weeks (jsonb), skill_weights, change_reason, llm_call_id | Her yeniden plan yeni satır |
+| `study_sessions` | user_id, local_date, status, snapshot_id | Günde bir "bugünün oturumu" |
+| `activity_contents` | content_hash, kind, item_ids[], cefr_sub, interest_tag, content (jsonb), audio_key, model, prompt_version, validator_version, validator_result, status, shareable, llm_call_id | Üretilen içeriğin **tek kopyası**; uygunsa kullanıcılar arasında paylaşılır |
+| `activities` | user_id, session_id, content_id, origin (session/extra/template), recommended, position | Bir içeriğin bir kullanıcıya gösterimi; aynı kişiye aynı içerik bir kez (unique) |
+| `events` | id (bigserial), user_id, type, occurred_at, recorded_at, activity_id, item_id, rating (FSRS 1–4), payload (jsonb), schema_version | **Tek doğruluk kaynağı**, append-only (veritabanı yetkisiyle). Öğrencinin yazdığı metin yalnızca burada |
+| `feedbacks` | writing_event_id, llm_call_id, status, hint_tr, correction, validator_result | Açıklama metni saklanmaz, katalogdan okunur |
+| `error_marks` | feedback_id, tag_code, span_start, span_end, shown | Hata örüntüleri buradan (ayrı `error_records` yok) |
+| `item_states` | user_id + item_id, stability, difficulty, due, last_review, reps, lapses, state, last_event_id | Türev; FSRS yazar, olaylardan yeniden kurulur |
+| `learner_snapshots` | user_id, content_hash, text, token_count, last_event_id | LLM'e giden öğrenci özeti; günde bir donar (Bölüm 6.2) |
+| `weekly_reports` | user_id, week_start, metrics (jsonb), generated_at | Türev; kullanıcının gördüğü hali saklanır |
+| `llm_calls` | user_id, purpose, model, prompt_version, snapshot_id, input/cache_read/cache_write/output token'ları, latency_ms, status, stop_reason, cost_microusd, raw_on_failure | Prompt metni saklanmaz (yeniden kurulabilir); ham yanıt yalnızca hata durumunda, 30 gün |
+| `reviews` | target_type (activity_content/feedback), target_id, reviewer, verdict, wrong_teaching, notes | Işıl'ın örneklemi ve "sorun var" kuyruğu (H4) |
+
+**Hipotezlerin verisi nerede:** H1 retention testi `fixed_tests` + events · H2 aktiflik events · H3 ön/son test `fixed_tests` + events · H4 `reviews` · H5 `feedback_reaction` olayı · H6 `nps_submitted` olayı · H7 `activities.recommended` + `extra_activity_chosen` olayı.
+
+**Silme (KVKK/GDPR):** `users` üzerindeki kişisel alanlar boşaltılır ve `deleted_at` dolar. Events payload'undaki öğrenci metinleri, sahip rolüyle çalışan ve kendisi de kayıt bırakan tek bir `redact_user` işlemiyle silinir. Append-only kuralının tek istisnası budur.
+
+**Olay türleri (ilk sürüm, şemalar `api/app/events/schemas.py`):** `consent_given`, `goal_set`, `fixed_test_answer`, `fixed_test_completed` (yerleştirme, ön/son ve hatırlama testleri), `curriculum_created`, `curriculum_replanned`, `activity_shown`, `answer_submitted`, `writing_submitted`, `feedback_shown`, `feedback_reaction` (anladım/anlamadım, H5), `rewrite_submitted`, `activity_flagged`, `session_completed`, `extra_activity_chosen` (öneri vs. seçim, H7), `report_viewed`, `nps_submitted` (H6). Her olay `schema_version` taşır; payload şeması Pydantic ile doğrulanır.
 
 **Önemli teknik not – sabit testler.** Blueprint'te etkinlikler canlı üretilir; ama **yerleştirme testi, ön/son test (H3) ve 14 gün hatırlama testi (H1) canlı üretilmemeli.** Kullanıcılar arasında karşılaştırılabilir ölçüm için bu testler sabit, sürümlü ve Işıl onaylı olmalıdır. Bu yüzden `fixed_tests` tablosu eklendi. Bu, ürün dokümanındaki "Ölçüm zorlaşır" riskine doğrudan önlemdir.
 
@@ -175,6 +191,20 @@ Varsayım, kullanıcı-gün başına: oturum üretimi (3k girdi / 5k çıktı), 
 **Ne zaman yeniden değerlendirilir:** Kapı 2'deki altın set sonucunda Sonnet 5.5 "yanlış öğretme" ya da "cevabı ele verme" eşiğini tutturamazsa, geri bildirim rotası için bir alternatif (daha güçlü bir Claude modeli ya da başka sağlayıcı) aynı altın setle karşılaştırılır. Pilot öncesi AB işleme şartı çıkarsa Vertex AI `eu` uç noktasına geçilir.
 
 **TTS ayrı:** Anthropic TTS sunmuyor; TTS sağlayıcısı ayrı karar olarak kalıyor (Hafta 3).
+
+### 6.2 Bağlam ve maliyet modeli
+
+Başlangıç noktası Hermes Agent: kısa bir hafıza dosyası oturum başında sistem prompt'una **dondurulmuş** olarak girer, önek sabit kaldığı için prompt cache tutar. Bizim üç farkımız var:
+
+1. **Hafızayı LLM yazmaz.** Öğrenci özeti (`learner_snapshots`) olaylardan deterministik olarak üretilir. Sapma olmaz, yeniden üretilebilir, "LLM öğrenci modeline yazmaz" kuralına uyar.
+2. **Üç katmanlı önek.** (0) Amaç başına statik blok: rol, pedagoji kuralları, hata kodu listesi, 2–3 örnek. Tüm kullanıcılar için aynıdır, ≥512 token, `cache_control` ttl 1 saat. (1) Öğrenci özeti: ≤300 token, günde bir donar; seviye, hedef, ilgi alanları, zayıf beceri, en sık 3 hata kodu, bugünün odağı. İkinci cache kırılma noktası. (2) Görev: yalnızca bu görevin öğe kartları; geri bildirimde hedef cümle, öğrenci metni ve o öğelerdeki son 2 hata kodu.
+3. **Asıl maliyet çıktıda** (pilot tahmininde ~%75). Bu yüzden çıktı da hedefleniyor:
+   - Türkçe açıklama katalogdan gelir; LLM yalnızca kod, konum ve kısa ipucu döndürür.
+   - Çıktı şemaları girdiyi yankılamaz; `max_tokens` ve `effort` amaç başına ayardır.
+   - Doğrulanmış kısa etkinlikler (hatırlama, yeni öğe sunumu) aynı öğe + seviye + ilgi alanı için yeniden kullanılır; üretimden önce `activity_contents` aranır. Aynı kişiye aynı içerik gösterilmez. Okuma, diyalog ve geri bildirim her zaman kişiye özel üretilir.
+   - Hatırlama soruları gerektiğinde `reference_sentences`'tan LLM'siz şablonla üretilir.
+
+Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazılı diyalog 4–6 turla sınırlı ve yalnızca eklenir. Gece üretimi için Batch API sonraki optimizasyondur. Her çağrının cache okuma/yazma token'ları `llm_calls`'a yazılır; cache'in tuttuğu buradan izlenir.
 
 **CTO notu – oturumu tek çağrıda üretmek.** Blueprint "bugünün oturumu tek çağrıyla" diyor. Uzun çıktıda tek bir etkinlik doğrulamadan kalırsa tüm oturumu çöpe atmak pahalıdır. Uygulama şöyle olacak: tek çağrı tüm oturumu üretir, ama doğrulama **etkinlik bazında** yapılır; kalan etkinlikler yalnızca kendileri için yeniden üretilir, ikinci kez kalırsa yedek şablona düşer. Gece üretimi sorunsuz olduğu sürece kullanıcı bunu hissetmez.
 
