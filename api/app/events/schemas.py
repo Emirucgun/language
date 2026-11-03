@@ -68,6 +68,13 @@ class FeedbackReaction(Payload):
     understood: bool
 
 
+class WritingAssessed(Payload):
+    """Doğrulanmış geri bildirimin sonucu; hedef öğenin FSRS derecesi bu olayın `rating`'inde."""
+
+    feedback_id: int
+    is_correct: bool
+
+
 class ActivityFlagged(Payload):
     reason: str | None = Field(default=None, max_length=500)
 
@@ -100,6 +107,7 @@ PAYLOADS: dict[tuple[str, int], type[Payload]] = {
     ("answer_submitted", 1): AnswerSubmitted,
     ("writing_submitted", 1): WritingSubmitted,
     ("rewrite_submitted", 1): WritingSubmitted,
+    ("writing_assessed", 1): WritingAssessed,
     ("feedback_shown", 1): Empty,
     ("feedback_reaction", 1): FeedbackReaction,
     ("activity_flagged", 1): ActivityFlagged,

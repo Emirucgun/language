@@ -14,8 +14,6 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.feedback.llm_schema import WritingFeedback
-from app.llm.client import LLMRequest, LLMResult
-from app.llm.pricing import Usage
 from app.llm.service import (
     DailyLimitExceeded,
     PersonalDataInPrompt,
@@ -24,28 +22,14 @@ from app.llm.service import (
     generate_structured,
 )
 from app.llm.snapshot import save_snapshot
+from tests import fakes
 
 OK = WritingFeedback(is_correct=True, errors=[], hint_tr=None, correction=None)
 
 
-class FakeClient:
+class FakeClient(fakes.FakeClient):
     def __init__(self, parsed: BaseModel | None = OK, error: Exception | None = None) -> None:
-        self.parsed = parsed
-        self.error = error
-        self.requests: list[LLMRequest] = []
-
-    def complete(self, request: LLMRequest) -> LLMResult:
-        self.requests.append(request)
-        if self.error:
-            raise self.error
-        return LLMResult(
-            model=request.config.model,
-            parsed=self.parsed,
-            usage=Usage(input_tokens=300, output_tokens=120, cache_read_tokens=900),
-            stop_reason="end_turn" if self.parsed else "max_tokens",
-            latency_ms=850,
-            raw_text=None if self.parsed else '{"is_correct": tr',
-        )
+        super().__init__(parsed, error)
 
 
 @pytest.fixture

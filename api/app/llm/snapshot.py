@@ -100,6 +100,27 @@ def gather_facts(session: Session, user_id: uuid.UUID) -> LearnerFacts:
     )
 
 
+def daily_snapshot(session: Session, user_id: uuid.UUID) -> LearnerSnapshot:
+    """Kullanıcının bugünkü (kendi saat diliminde) donmuş özeti; yoksa şimdi üretilir.
+
+    Gün içinde özet değişmez: aynı önek önbellekte kalır (Hermes'in oturum başı dondurması).
+    """
+    today = session.scalars(
+        select(LearnerSnapshot)
+        .where(
+            LearnerSnapshot.user_id == user_id,
+            text(
+                "(learner_snapshots.created_at AT TIME ZONE users.timezone)::date "
+                "= (now() AT TIME ZONE users.timezone)::date"
+            ),
+        )
+        .join(User, User.id == LearnerSnapshot.user_id)
+        .order_by(LearnerSnapshot.id.desc())
+        .limit(1)
+    ).first()
+    return today or save_snapshot(session, user_id)
+
+
 def save_snapshot(session: Session, user_id: uuid.UUID) -> LearnerSnapshot:
     """Özeti üretir; aynı metin daha önce kaydedildiyse o satırı döner."""
     body = render(gather_facts(session, user_id))

@@ -226,6 +226,8 @@ Sıkıştırma gerekmez: çağrılar tek seferlik, tek çok turlu iş olan yazı
 
 **Uygulandı (`api/app/validator/`):** `core.py` (sonuç tipi, sözcükleme, `vocab_allowlist` + öğe biçimlerinden seviye sözlüğü), `feedback.py` (tutarlılık, katalog kodu, konum, ipucu ≤120 karakter, ipucunda düzeltme kelimesi yok, düzeltme öğrencinin cümlesine ≥0.5 benzer ve seviye içinde; gösterilen hata en fazla 2), `activity.py` (seviye, hedef öğe, cevap sızıntısı, tek doğru şık, ses–metin uyumu, uzunluk). Bilinen sınır: cümle başındaki özel isim sıradan kelimeden ayırt edilemez; üretici kullandığı isimleri izinli kelime olarak verir.
 
+**Geri bildirim akışı (uygulandı, `api/app/feedback/service.py`):** `give_feedback` öğrencinin metnini `writing_submitted` olayı olarak yazar → günün donmuş öğrenci özetiyle Sonnet'e sorar → doğrulayıcıdan geçirir → `feedbacks` + `error_marks` kaydeder. Geçerse birincil hedef öğe için `writing_assessed` olayı (doğru → Good, yanlış → Again) yazılır ve tekrar motoru güncellenir; geçmezse (limit, API hatası, ret, doğrulayıcı) öğrenci "şimdilik atladık" görür, öğrenci modeli değişmez. Doğru cümle yalnızca `submit_rewrite` ile, yeniden yazmadan sonra döner. Bekleyen (`deferred`/`rejected`) geri bildirimleri yeniden işleyen iş henüz yok.
+
 İzinli kelime listesinin kaynağı EVP lisans sonucuna bağlı (Faz 0). Lisans uygun değilse açık bir frekans listesi + Işıl'ın havuzu ile kendi listemiz türetilir. Lemmatizasyon MVP'de basit tutulur; yetmezse spaCy değerlendirilir.
 
 **Altın set.** `eval/golden/` altında Işıl'ın etiketlediği ~100 cümle (JSONL). `uv run python -m eval.golden --purpose feedback` komutu blueprint Bölüm 7'deki beş ölçütü raporlar. Prompt ya da model değişikliği bu rapor olmadan birleştirilmez.
