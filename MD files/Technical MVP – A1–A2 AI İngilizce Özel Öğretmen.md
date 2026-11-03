@@ -248,6 +248,13 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Uç noktalar:** `GET /api/session/today`, `POST /api/activities/{id}/answer`; `POST /api/feedback` oturum etkinliğinde görevi sunucudaki içerikten okur.
 - **İlk gerçek ölçüm (3 Kas 2026, geliştirme içeriğiyle):** oturum başı ~$0.003 (2 Haiku çağrısı; ikincisi önbellekten 2.958 token okudu). Süre ~23 sn: kullanıcı bekletilemez, **gece ön üretimi (procrastinate işi) pilot öncesi şart**. Reddedilen 5 çıktının hepsi seviye kontrolündendi: çekim kuralları (`friends→friend`, `watching→watch`) eklendi ve geliştirme kelime listesi genişletildi; aynı 5 çıktı yeniden doğrulamada geçti. Gerçek seviye listesi (EVP ya da açık frekans listesi) hâlâ açık karar.
 
+## 6.5 Gece ön üretimi (uygulandı)
+
+- **Kuyruk:** procrastinate, kendi `procrastinate` şemasında (göç 0003; bağlantı `search_path` ile görür). Worker: `uv run python -m app.worker` (Windows'ta psycopg'nin asenkron modu için Selector döngüsü açıkça seçilir).
+- **İşler (`app/jobs.py`):** `schedule_sessions` 15 dakikada bir çalışır ve `app/sessions/scheduling.py` kuralıyla seçilen kullanıcılar için `generate_session` işini kuyruğa koyar (kullanıcı + gün başına tek iş, `queueing_lock`). `generate_session` 3 deneme hakkıyla `ensure_session`'ı çağırır; tekrar çalışması LLM'e ikinci kez gitmez.
+- **Seçim kuralı:** yerel saat 03:00'ü geçmiş, onam + hedef tamam, son 7 günde aktif (ya da yeni kayıt) ve bugünün oturumu hazır değil. 7 günden uzun süredir gelmeyen kullanıcıya para harcanmaz; döndüğünde oturum istek anında üretilir.
+- **İlk gerçek çalışma (3 Kas 2026):** yeni bir kullanıcı için oturum arka planda 16,6 sn'de üretildi (2 Haiku çağrısı), öğrenci beklemedi. Ancak oturum zayıf çıktı (4 etkinlik, 2'si şablon, okuma yok): reddedilen 7 çıktının hepsi seviye kontrolündendi (cat, near, museum, flat, things...). **Darboğaz artık gerçek seviye kelime listesi**; geliştirme listesi çok küçük. Bu karar (Bölüm 10) öne çekilmeli.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |
