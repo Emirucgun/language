@@ -227,7 +227,7 @@ Bu liste Teknik MVP belgesine dayanıyordu. Kod okununca listede olmayan sorunla
 
 **İşler**
 
-- [ ] **EK-1 · CI yok.** Sorun: `.github/` yok; DZ-2, DK-6 ve belge kuralı 3 CI'a dayanıyor. Yapılacak: pytest (Postgres servisiyle), ruff, mypy, web lint ve typecheck; changelog satırı eksikse uyarı. Kabul: GitHub'da ilk koşu yeşil.
+- [x] **EK-1 · CI yok.** Sorun: `.github/` yok; DZ-2, DK-6 ve belge kuralı 3 CI'a dayanıyor. Yapılacak: pytest (Postgres servisiyle), ruff, mypy, web lint ve typecheck; changelog satırı eksikse uyarı. Kabul: GitHub'da ilk koşu yeşil.
 - [x] **EK-2 · Kişisel veri koruması öğrenciye 500 dönüyor.** Sorun: `PersonalDataInPrompt` uygulamada hiçbir yerde yakalanmıyordu; metnine e-posta yazan öğrenci hata alıyor, yazısı kayboluyordu. Çözüm: e-posta içeren metin istek anında 422 ile geri çevrilir, hiçbir şey saklanmaz; `generate_structured` içindeki koruma son savunma hattı olarak `None` döner. Kabul: öğrenci anlaşılır bir uyarı görür, metni ekranda kalır, adres hiçbir yere yazılmaz; test.
 - [x] **EK-3 · Yerleştirme bitmeden plan üretimi (doğrulandı).** Sorun: `sessions/scheduling.py` hedefe bakıyor, yerleştirme testine bakmıyor; test sürerken iş varsayılan A1 ile plan kurabilir ve plan yenilenmez. Kabul: yerleştirmesi bitmemiş kullanıcı seçilmiyor; test.
 - [x] **EK-4 · Hafta sayacı yeniden planda sıfırlanıyor (doğrulandı, yalnızca görünüm).** Sorun: yeniden plan yeni bir 8 hafta üretir, yani öğe sırası doğruydu; ama öğrenci her hafta "1. hafta" görüyordu. Çözüm: gösterilen hafta plan sürümü kadar kaydırılır, seçim mantığı değişmedi. Kabul: yeniden plan sonrası doğru hafta gösterilir, öğe sırası değişmez; test.

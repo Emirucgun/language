@@ -24,7 +24,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | İnceleme ekranı | Yok | GL-1 | Emir |
 | Hatırlama, ön ve son test | Yok | DZ-3, DZ-4 | Emir, Işıl |
 | OpenAI geçişi | Kısmi | Anahtar var; metin adaptörü yok (OA-2); OA-5 dev seti | Emir |
-| CI | Kısmi | İlk koşu push sonrası görülecek (EK-1) | Emir |
+| CI | Hazır | | Emir |
 | Barındırma, yedek, izleme | Yok | GL-5, GL-7 | Emir |
 | PWA ve Playwright | Yok | Yap ya da belgeden çıkar kararı (EK-15) | Emir |
 
@@ -36,7 +36,6 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 
 | İş | Eksik olan |
 | --- | --- |
-| EK-1 | GitHub'da ilk koşunun yeşil olması (push gerekir) |
 | DK-8 | Aracın yeni bir işe `AGENTS.md`'den başladığı deneme |
 | GL-2 | Şablonların Sheets'e yüklenip Işıl'la paylaşılması (Emir) |
 | OA-1 | Harcama limiti teyidi ve satışa soru (Emir); ADR-0001 kabulü |
