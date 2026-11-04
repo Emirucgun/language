@@ -21,6 +21,7 @@ export default function PanelPage() {
   const me = useMe("app");
   const router = useRouter();
   const [hasReport, setHasReport] = useState(false);
+  const [readyCount, setReadyCount] = useState(0);
 
   useEffect(() => {
     if (!me) return;
@@ -29,6 +30,10 @@ export default function PanelPage() {
       .latestReport()
       .then(() => setHasReport(true))
       .catch(() => setHasReport(false));
+    api
+      .readyFeedback()
+      .then((items) => setReadyCount(items.length))
+      .catch(() => setReadyCount(0));
   }, [me]);
 
   if (!me) return <Screen><Loading /></Screen>;
@@ -40,6 +45,16 @@ export default function PanelPage() {
 
   return (
     <Screen title={me.display_name ? `Merhaba ${me.display_name}` : "Merhaba"}>
+      {readyCount > 0 && (
+        <Link
+          href="/feedback"
+          className="flex min-h-12 items-center justify-between rounded-xl border border-accent bg-card px-4 hover:bg-muted"
+        >
+          <span className="font-medium">Geri bildirimlerin hazır</span>
+          <span className="text-sm text-accent">{readyCount} cümle →</span>
+        </Link>
+      )}
+
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Bugünün oturumu</h2>

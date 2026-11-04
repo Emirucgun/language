@@ -122,15 +122,38 @@ def give_feedback(
 
     Commit çağırana aittir. Birincil hedef öğe (`target_item_ids[0]`) derecelendirilir.
     """
-    primary_item = target_item_ids[0] if target_item_ids else None
     writing = record_event(
         session,
         user_id=user_id,
         type="writing_submitted",
         payload={"text": learner_text, "attempt": attempt},
         activity_id=activity_id,
-        item_id=primary_item,
+        item_id=target_item_ids[0] if target_item_ids else None,
     )
+    return assess_writing(
+        session,
+        client,
+        writing=writing,
+        task=task,
+        target_item_ids=target_item_ids,
+        lexicon=lexicon,
+    )
+
+
+def assess_writing(
+    session: Session,
+    client: LLMClient,
+    *,
+    writing: Event,
+    task: str,
+    target_item_ids: Sequence[int],
+    lexicon: Lexicon | None = None,
+) -> FeedbackView:
+    """Kaydedilmiş bir yazıyı değerlendirir: ilk gönderimde ve bekleyenler yeniden
+    işlenirken aynı yol. Her deneme yeni bir `feedbacks` satırıdır (geçmiş korunur)."""
+    user_id, activity_id = writing.user_id, writing.activity_id
+    learner_text = str(writing.payload["text"])
+    primary_item = target_item_ids[0] if target_item_ids else None
 
     items = session.scalars(select(Item).where(Item.id.in_(target_item_ids))).all()
     snapshot = daily_snapshot(session, user_id)
@@ -206,21 +229,36 @@ def give_feedback(
         )
         update_item_states(session, user_id)
 
+    return stored_view(session, feedback)
+
+
+def stored_view(session: Session, feedback: Feedback) -> FeedbackView:
+    """Kaydedilmiş geri bildirimin öğrenciye giden hali (gösterilen hatalar, katalog açıklaması)."""
+    if feedback.status != "shown":
+        return FeedbackView(
+            status="deferred", feedback_id=feedback.id, writing_event_id=feedback.writing_event_id
+        )
+    catalog = _catalog(session)
+    marks = session.scalars(
+        select(ErrorMark)
+        .where(ErrorMark.feedback_id == feedback.id, ErrorMark.shown)
+        .order_by(ErrorMark.id)
+    ).all()
     return FeedbackView(
         status="shown",
         feedback_id=feedback.id,
-        writing_event_id=writing.id,
-        is_correct=parsed.is_correct,
-        hint_tr=parsed.hint_tr,
+        writing_event_id=feedback.writing_event_id,
+        is_correct=not marks and feedback.correction is None,
+        hint_tr=feedback.hint_tr,
         errors=tuple(
             ShownError(
-                code=e.code,
-                name_tr=catalog[e.code].name_tr,
-                explanation_tr=catalog[e.code].explanation_tr,
-                start=e.start,
-                end=e.end,
+                code=m.tag_code,
+                name_tr=catalog[m.tag_code].name_tr,
+                explanation_tr=catalog[m.tag_code].explanation_tr,
+                start=m.span_start,
+                end=m.span_end,
             )
-            for e in shown_errors(parsed)
+            for m in marks
         ),
     )
 

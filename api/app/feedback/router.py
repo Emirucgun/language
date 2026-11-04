@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.deps import ConsentedUser, Db, get_llm_client
+from app.feedback.retry import ready_for
 from app.feedback.service import FeedbackView, give_feedback, submit_rewrite
 from app.llm.client import LLMClient
 from app.sessions import service as sessions
@@ -28,6 +29,21 @@ class RewriteRequest(BaseModel):
 
 class RewriteResult(BaseModel):
     correction: str | None
+
+
+class ReadyFeedbackView(BaseModel):
+    learner_text: str
+    feedback: FeedbackView
+
+
+@router.get("/ready")
+def get_ready(db: Db, user: ConsentedUser) -> list[ReadyFeedbackView]:
+    """Sonradan hazırlanan ve henüz görülmemiş geri bildirimler. Öğrenci gördüğünde istemci
+    `feedback_shown` olayını `feedback_id` ile yazar; liste bir daha göstermez."""
+    return [
+        ReadyFeedbackView(learner_text=r.learner_text, feedback=r.view)
+        for r in ready_for(db, user.id)
+    ]
 
 
 @router.post("")

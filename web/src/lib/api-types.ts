@@ -162,6 +162,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/feedback/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ready
+         * @description Sonradan hazırlanan ve henüz görülmemiş geri bildirimler. Öğrenci gördüğünde istemci
+         *     `feedback_shown` olayını `feedback_id` ile yazar; liste bir daha göstermez.
+         */
+        get: operations["get_ready_api_feedback_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/feedback": {
         parameters: {
             query?: never;
@@ -551,6 +572,12 @@ export interface components {
             /** Answered */
             answered: string[];
             result: components["schemas"]["PlacementResult"] | null;
+        };
+        /** ReadyFeedbackView */
+        ReadyFeedbackView: {
+            /** Learner Text */
+            learner_text: string;
+            feedback: components["schemas"]["FeedbackView"];
         };
         /** Recorded */
         Recorded: {
@@ -960,6 +987,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlacementResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ready_api_feedback_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadyFeedbackView"][];
                 };
             };
             /** @description Validation Error */

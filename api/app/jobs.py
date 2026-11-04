@@ -16,6 +16,7 @@ from app.auth.models import User
 from app.config import settings
 from app.db import SessionLocal
 from app.deps import get_llm_client
+from app.feedback.retry import pending_writings, retry_writing
 from app.reports.scheduling import users_needing_review
 from app.reports.weekly import weekly_review
 from app.sessions.generation import ensure_session
@@ -80,6 +81,37 @@ def weekly_review_job(user_id: str, week_start: str) -> str:
         report = weekly_review(db, get_llm_client(), user, date.fromisoformat(week_start))
         db.commit()
         return str(report.week_start)
+
+
+def _pending_feedback() -> list[int]:
+    with SessionLocal() as db:
+        return pending_writings(db)
+
+
+@app.periodic(cron="20 * * * *", periodic_id="schedule_feedback_retries")
+@app.task(name="schedule_feedback_retries", queueing_lock="schedule_feedback_retries")
+async def schedule_feedback_retries(timestamp: int) -> int:
+    """Saatte bir: "şimdilik atladık" denen yazılar yeniden değerlendirilir."""
+    queued = 0
+    for writing_event_id in await asyncio.to_thread(_pending_feedback):
+        try:
+            await retry_feedback.configure(
+                queueing_lock=f"feedback:{writing_event_id}"
+            ).defer_async(writing_event_id=writing_event_id)
+            queued += 1
+        except AlreadyEnqueued:
+            pass
+    return queued
+
+
+@app.task(name="retry_feedback")
+def retry_feedback(writing_event_id: int) -> str:
+    """Kendi içinde yeniden denemez: başarısızlık yeni bir `feedbacks` satırıdır ve bir
+    sonraki saatlik tur (deneme hakkı varsa) tekrar dener."""
+    with SessionLocal() as db:
+        view = retry_writing(db, get_llm_client(), writing_event_id)
+        db.commit()
+        return "skipped" if view is None else view.status
 
 
 @app.task(name="generate_session", retry=RetryStrategy(max_attempts=3, wait=120))

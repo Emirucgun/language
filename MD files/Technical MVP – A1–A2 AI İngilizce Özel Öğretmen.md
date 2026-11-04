@@ -283,6 +283,13 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Ekran:** `/report` (tarih aralığı, dört gösterge, beceri dağılımı, en sık hata, plan değişikliği); panelde rapor varsa bağlantı. `GET /api/reports/latest`.
 - **İlk gerçek çalışma (4 Kas 2026):** 8,2 sn, tek Sonnet çağrısı; değişiklik açıklaması somut ve hatalara dayalı. İki ifade sorunu prompt v2'de düzeltilmeli: rapor pazar günü aynı hafta için üretildiği hâlde "geçen hafta" dedi; "artikel" yerine İngilizce "article" kullandı.
 
+## 6.9 Bekleyen geri bildirim (uygulandı)
+
+- **Yeniden deneme (`app/feedback/retry.py`):** gösterilemeyen yazılar (günlük limit, API hatası, ret, doğrulayıcıdan kalma) saatlik `schedule_feedback_retries` işiyle yeniden değerlendirilir; yazı başına tek iş. Sınırlar: en fazla 7 günlük yazı, en fazla 3 deneme; sonra bırakılır (denetimde `rejected`/`deferred` kayıtlar olarak kalır). Her deneme yeni bir `feedbacks` satırıdır, geçmiş korunur.
+- **Görev metni saklanmaz:** etkinlikteki yazma görevinden ya da serbest pratik şablonundan yeniden kurulur. Değerlendirme, ilk gönderimle aynı yoldan geçer (`assess_writing`): doğrulayıcı, hata işaretleri, derece olayı, tekrar motoru.
+- **Öğrenciye:** gecikmeli hazırlanan ve henüz görülmemiş geri bildirimler `GET /api/feedback/ready` ile gelir; panelde "Geri bildirimlerin hazır (n)" kartı, `/feedback` sayfasında aynı akış (işaretli cümle → ipucu → açıklama → anladım/anlamadım → yeniden yaz → doğrusu). Görüldüğünde `feedback_shown` olayı `feedback_id` ile yazılır ve liste bir daha göstermez.
+- **Gerçek deneme (4 Kas 2026):** kesinti benzetimiyle ertelenen "My brother like football very much." saatlik işin yolundan Sonnet ile yeniden değerlendirildi: TENSE (üçüncü tekil -s), panelde göründü, yeniden yazmadan sonra doğrusu gösterildi, görülünce kart kalktı.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |

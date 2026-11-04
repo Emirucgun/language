@@ -71,6 +71,13 @@ class FeedbackReaction(Payload):
     understood: bool
 
 
+class FeedbackShown(Payload):
+    """Öğrenci geri bildirimi gördü. Gecikmeli geri bildirimde hangisi görüldü bilinsin diye
+    `feedback_id` taşınır (sonradan eklenen isteğe bağlı alan; eski olaylar geçerli)."""
+
+    feedback_id: int | None = None
+
+
 class WritingAssessed(Payload):
     """Doğrulanmış geri bildirimin sonucu; hedef öğenin FSRS derecesi bu olayın `rating`'inde."""
 
@@ -111,7 +118,7 @@ PAYLOADS: dict[tuple[str, int], type[Payload]] = {
     ("writing_submitted", 1): WritingSubmitted,
     ("rewrite_submitted", 1): WritingSubmitted,
     ("writing_assessed", 1): WritingAssessed,
-    ("feedback_shown", 1): Empty,
+    ("feedback_shown", 1): FeedbackShown,
     ("feedback_reaction", 1): FeedbackReaction,
     ("activity_flagged", 1): ActivityFlagged,
     ("extra_activity_chosen", 1): ExtraActivityChosen,
