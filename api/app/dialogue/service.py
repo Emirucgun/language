@@ -51,7 +51,7 @@ from app.validator.feedback import validate_feedback
 
 log = structlog.get_logger()
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"  # v2: hata yeri karakter konumu değil alıntı (konumu sunucu bulur)
 TARGET_ITEMS = 2
 PARTNER_WORDS = (1, 20)  # prompt 15 diyor; doğrulayıcı biraz pay bırakır
 FALLBACK_CONTINUE = PartnerLine(

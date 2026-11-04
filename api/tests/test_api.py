@@ -34,7 +34,7 @@ class FakeSender:
 
 FEEDBACK = WritingFeedback(
     is_correct=False,
-    errors=[{"code": "ARTICLE", "start": 10, "end": 10}],  # type: ignore[list-item]
+    errors=[{"code": "ARTICLE", "quote": "teacher", "gap": "before"}],  # type: ignore[list-item]
     hint_tr="Meslekten önce küçük bir kelime eksik.",
     correction="I work as a teacher.",
 )

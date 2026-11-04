@@ -1,16 +1,28 @@
 """Yazma geri bildiriminin LLM çıktı şeması.
 
 Bilerek dar: LLM Türkçe açıklama yazmaz (katalogdan gelir) ve öğrencinin metnini
-geri yankılamaz; yalnızca hata kodu, metindeki konumu, kısa bir ipucu ve doğru cümle.
+geri yankılamaz; yalnızca hata kodu, hatanın yeri, kısa bir ipucu ve doğru cümle.
+
+Hatanın yeri karakter konumu olarak istenmez: model konumu sık kaydırıyor (4 Kas 2026,
+"I work as engineer" denemesi). Model hatalı kelimeleri alıntılar, konumu sunucu bulur
+(`app/validator/feedback.py: span_of`).
 """
+
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 
 class FoundError(BaseModel):
     code: str = Field(description="Error code from the catalog, or OTHER.")
-    start: int = Field(description="Start character offset in the student's text.")
-    end: int = Field(description="End character offset (exclusive).")
+    quote: str = Field(
+        description="Exact word(s) copied from the learner's text where the error is. "
+        "For a missing word: the word right next to the gap."
+    )
+    gap: Literal["none", "before", "after"] = Field(
+        description="none: the quoted words are wrong. before/after: a word is missing "
+        "right before/after the quoted words."
+    )
 
 
 class WritingFeedback(BaseModel):

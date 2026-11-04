@@ -32,7 +32,7 @@ LEXICON = Lexicon(frozenset(LEXICON_WORDS.split()))
 CORRECT = WritingFeedback(is_correct=True, errors=[], hint_tr=None, correction=None)
 ARTICLE = WritingFeedback(
     is_correct=False,
-    errors=[FoundError(code="ARTICLE", start=5, end=5)],
+    errors=[FoundError(code="ARTICLE", quote="teacher", gap="before")],
     hint_tr="İşini söylerken bir şey eksik.",
     correction="I am a teacher.",
 )

@@ -65,7 +65,7 @@ def user(session: Session) -> uuid.UUID:
 def _feedback(**kwargs: object) -> WritingFeedback:
     base: dict[str, object] = {
         "is_correct": False,
-        "errors": [{"code": "ARTICLE", "start": 10, "end": 10}],
+        "errors": [{"code": "ARTICLE", "quote": "teacher", "gap": "before"}],
         "hint_tr": "Meslekten önce küçük bir kelime eksik.",
         "correction": "I work as a teacher.",
     }
@@ -92,15 +92,16 @@ def test_valid_feedback_is_shown_and_updates_the_learner_model(
     session: Session, user: uuid.UUID, item_id: int
 ) -> None:
     errors = [
-        {"code": "ARTICLE", "start": 10, "end": 10},
-        {"code": "OTHER", "start": 0, "end": 1},
-        {"code": "BE_VERB", "start": 2, "end": 2},
+        {"code": "ARTICLE", "quote": "teacher", "gap": "before"},
+        {"code": "OTHER", "quote": "I", "gap": "none"},
+        {"code": "BE_VERB", "quote": "work", "gap": "before"},
     ]
     view = _give(session, user, item_id, FakeClient(_feedback(errors=errors)))
 
     assert view.status == "shown" and view.is_correct is False
     assert [e.code for e in view.errors] == ["ARTICLE", "OTHER"]  # en fazla 2
     assert view.errors[0].explanation_tr.startswith("Tekil")  # açıklama katalogdan
+    assert (view.errors[0].start, view.errors[0].end) == (10, 10)  # alıntıdan sunucu buldu
     assert not hasattr(view, "correction")  # doğru cümle henüz gösterilmez
 
     marks = session.scalars(select(ErrorMark).order_by(ErrorMark.id)).all()[-3:]

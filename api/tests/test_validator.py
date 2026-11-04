@@ -18,7 +18,7 @@ from app.validator.activity import (
     check_word_count,
 )
 from app.validator.core import Lexicon, ValidationResult, load_lexicon
-from app.validator.feedback import shown_errors, validate_feedback
+from app.validator.feedback import shown_errors, span_of, validate_feedback
 from tests.conftest import _libpq_url
 
 A1_WORDS = (
@@ -33,7 +33,7 @@ CODES = {"ARTICLE", "BE_VERB", "PREPOSITION"}
 def _fb(**kwargs: object) -> WritingFeedback:
     base: dict[str, object] = {
         "is_correct": False,
-        "errors": [{"code": "ARTICLE", "start": 10, "end": 10}],
+        "errors": [{"code": "ARTICLE", "quote": "teacher", "gap": "before"}],
         "hint_tr": "Meslekten önce küçük bir kelime eksik.",
         "correction": "I work as a teacher.",
     }
@@ -54,8 +54,8 @@ def test_prompt_examples_pass() -> None:
     assert _check(correct, "my city is very big") == set()
     two_errors = _fb(
         errors=[
-            {"code": "BE_VERB", "start": 4, "end": 4},
-            {"code": "ARTICLE", "start": 4, "end": 4},
+            {"code": "BE_VERB", "quote": "teacher", "gap": "before"},
+            {"code": "ARTICLE", "quote": "teacher", "gap": "before"},
         ],
         hint_tr="Özne ile meslek arasında bir fiil eksik.",
         correction="She is a teacher.",
@@ -85,10 +85,10 @@ def test_error_needs_hint_and_correction() -> None:
     assert {"missing_hint", "missing_correction"} <= issues
 
 
-def test_unknown_code_and_bad_span() -> None:
-    issues = _check(_fb(errors=[{"code": "MADE_UP", "start": 5, "end": 99}]))
-    assert {"unknown_code", "bad_span"} <= issues
-    assert _check(_fb(errors=[{"code": "OTHER", "start": 0, "end": 1}])) == set()
+def test_unknown_code_and_missing_quote() -> None:
+    issues = _check(_fb(errors=[{"code": "MADE_UP", "quote": "doctor", "gap": "none"}]))
+    assert {"unknown_code", "quote_not_found"} <= issues
+    assert _check(_fb(errors=[{"code": "OTHER", "quote": "I", "gap": "none"}])) == set()
 
 
 def test_full_rewrite_is_rejected() -> None:
@@ -106,8 +106,27 @@ def test_long_hint_is_rejected() -> None:
 
 
 def test_only_two_errors_are_shown() -> None:
-    errors = [FoundError(code="ARTICLE", start=0, end=0) for _ in range(4)]
+    errors = [FoundError(code="ARTICLE", quote="teacher", gap="before") for _ in range(4)]
     assert len(shown_errors(_fb(errors=[e.model_dump() for e in errors]))) == 2
+
+
+@pytest.mark.parametrize(
+    ("quote", "gap", "span"),
+    [
+        ("engineer", "before", (10, 10)),  # 4 Kas denemesindeki kayma: artık sunucu buluyor
+        ("work", "none", (2, 6)),
+        ("WORK  AS", "none", (2, 9)),  # büyük/küçük harf ve boşluk farkı
+        ("here", "after", (23, 23)),
+        ("I", "none", (0, 1)),  # ilk geçtiği yer
+        ("engine", "none", None),  # kelimenin parçası değil
+        ("doctor", "none", None),
+    ],
+)
+def test_error_place_is_found_on_the_server(
+    quote: str, gap: str, span: tuple[int, int] | None
+) -> None:
+    error = FoundError(code="ARTICLE", quote=quote, gap=gap)  # type: ignore[arg-type]
+    assert span_of(error, "I work as engineer here. I like it.") == span
 
 
 # --- Etkinlikler -------------------------------------------------------------

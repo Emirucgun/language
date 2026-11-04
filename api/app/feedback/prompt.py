@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.content.models import ErrorTag
 from app.llm.prompts import render_static
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"  # v2: hata yeri karakter konumu değil alıntı (konumu sunucu bulur)
 
 
 def error_catalog(session: Session) -> str:

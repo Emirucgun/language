@@ -34,14 +34,31 @@ def _check_consistency(fb: WritingFeedback, result: ValidationResult) -> None:
         result.add("missing_correction", "hata var ama düzeltme yok")
 
 
+def span_of(error: FoundError, learner_text: str) -> tuple[int, int] | None:
+    """Alıntının öğrencinin metnindeki yeri (kelime sınırında, büyük/küçük harf ve boşluk
+    farkı gözetmeden; ilk geçtiği yer). Eksik kelimede boş aralık: alıntının önü ya da arkası."""
+    parts = error.quote.split()
+    if not parts:
+        return None
+    pattern = r"(?<!\w)" + r"\s+".join(re.escape(p) for p in parts) + r"(?!\w)"
+    match = re.search(pattern, learner_text) or re.search(pattern, learner_text, re.IGNORECASE)
+    if match is None:
+        return None
+    if error.gap == "before":
+        return match.start(), match.start()
+    if error.gap == "after":
+        return match.end(), match.end()
+    return match.start(), match.end()
+
+
 def _check_errors(
     fb: WritingFeedback, learner_text: str, catalog_codes: set[str], result: ValidationResult
 ) -> None:
     for error in fb.errors:
         if error.code != OTHER and error.code not in catalog_codes:
             result.add("unknown_code", error.code)
-        if not 0 <= error.start <= error.end <= len(learner_text):
-            result.add("bad_span", f"{error.code} {error.start}-{error.end}")
+        if span_of(error, learner_text) is None:
+            result.add("quote_not_found", f"{error.code} {error.quote!r}")
 
 
 def _fix_words(learner_text: str, correction: str) -> set[str]:

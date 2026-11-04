@@ -28,7 +28,7 @@ from app.llm.snapshot import daily_snapshot
 from app.scheduler.engine import AnswerRating
 from app.scheduler.service import update_item_states
 from app.validator.core import Lexicon, ValidationResult, load_lexicon
-from app.validator.feedback import shown_errors, validate_feedback
+from app.validator.feedback import shown_errors, span_of, validate_feedback
 
 RECENT_CODES = 2
 
@@ -91,14 +91,18 @@ def store_feedback(
     session.add(feedback)
     session.flush()
     if parsed and status == "shown":
+        learner_text = str(session.get_one(Event, writing_event_id).payload["text"])
         shown = len(shown_errors(parsed))
         for index, error in enumerate(parsed.errors):
+            # Doğrulayıcı her alıntının metinde bulunduğunu garanti eder.
+            span = span_of(error, learner_text)
+            assert span is not None
             session.add(
                 ErrorMark(
                     feedback_id=feedback.id,
                     tag_code=error.code,
-                    span_start=error.start,
-                    span_end=error.end,
+                    span_start=span[0],
+                    span_end=span[1],
                     shown=index < shown,
                 )
             )
