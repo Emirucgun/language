@@ -96,6 +96,19 @@ class ExtraActivityChosen(Payload):
     chosen_kind: str
 
 
+class DialogueReplied(Payload):
+    """Partnerin bir öğrenci cümlesine cevabı. Konuşma geçmişi yalnızca olaylardan kurulur:
+    öğrencinin cümlesi `writing_submitted`'ta, partnerinki burada (yalnızca eklenir)."""
+
+    turn: int = Field(ge=1)
+    writing_event_id: int
+    feedback_id: int | None  # doğrulayıcıdan geçen geri bildirim yoksa None
+    partner_en: str = Field(max_length=300)
+    partner_tr: str = Field(max_length=300)
+    source: Literal["llm", "fallback"]
+    done: bool
+
+
 class SessionCompleted(Payload):
     session_id: int
 
@@ -122,6 +135,7 @@ PAYLOADS: dict[tuple[str, int], type[Payload]] = {
     ("feedback_reaction", 1): FeedbackReaction,
     ("activity_flagged", 1): ActivityFlagged,
     ("extra_activity_chosen", 1): ExtraActivityChosen,
+    ("dialogue_replied", 1): DialogueReplied,
     ("session_completed", 1): SessionCompleted,
     ("report_viewed", 1): Empty,
     ("nps_submitted", 1): NpsSubmitted,

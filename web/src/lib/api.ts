@@ -11,6 +11,8 @@ export type SessionView = Schemas["SessionView"];
 export type ActivityView = Schemas["ActivityView"];
 export type ChoiceView = Schemas["ChoiceView"];
 export type AnswerResult = Schemas["AnswerResult"];
+export type DialogueView = Schemas["DialogueView"];
+export type PartnerLine = Schemas["PartnerLine"];
 
 export class ApiError extends Error {
   constructor(
@@ -66,6 +68,9 @@ export const api = {
     request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
   recommendation: () => request<Schemas["Recommendation"]>("GET", "/api/practice/recommendation"),
   extra: (body: Schemas["ExtraRequest"]) => request<Schemas["ExtraView"]>("POST", "/api/practice/extra", body),
+  dialogueStart: () => request<DialogueView>("POST", "/api/practice/dialogue"),
+  dialogueReply: (activityId: number, text: string) =>
+    request<DialogueView>("POST", `/api/practice/dialogue/${activityId}/reply`, { text }),
   readyFeedback: () => request<Schemas["ReadyFeedbackView"][]>("GET", "/api/feedback/ready"),
   latestReport: () => request<Schemas["ReportView"]>("GET", "/api/reports/latest"),
   curriculum: () => request<Schemas["CurriculumView"]>("GET", "/api/curriculum"),

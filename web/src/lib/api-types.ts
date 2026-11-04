@@ -325,6 +325,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/practice/dialogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start
+         * @description Senaryo ve açılış cümlesi sabit: LLM çağrısı yok, anında döner.
+         */
+        post: operations["start_api_practice_dialogue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/practice/dialogue/{activity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Dialogue */
+        get: operations["get_dialogue_api_practice_dialogue__activity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/practice/dialogue/{activity_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Reply
+         * @description Bir öğrenci cümlesi → geri bildirim + partnerin cevabı (birkaç saniye). Tüm görünüm döner.
+         */
+        post: operations["post_reply_api_practice_dialogue__activity_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/curriculum": {
         parameters: {
             query?: never;
@@ -482,6 +539,34 @@ export interface components {
             /** Estimate Tr */
             estimate_tr: string;
         };
+        /** DialogueView */
+        DialogueView: {
+            /** Activity Id */
+            activity_id: number;
+            /** Scenario Tr */
+            scenario_tr: string;
+            /** Learner Role Tr */
+            learner_role_tr: string;
+            /** Partner Role Tr */
+            partner_role_tr: string;
+            /** Target Items */
+            target_items: string[];
+            opening: components["schemas"]["PartnerLine"];
+            /** Turns */
+            turns: components["schemas"]["TurnView"][];
+            /**
+             * Min Turns
+             * @default 4
+             */
+            min_turns: number;
+            /**
+             * Max Turns
+             * @default 6
+             */
+            max_turns: number;
+            /** Done */
+            done: boolean;
+        };
         /** Example */
         Example: {
             /** En */
@@ -597,6 +682,19 @@ export interface components {
             /** Level */
             level: string | null;
         };
+        /** PartnerLine */
+        PartnerLine: {
+            /**
+             * En
+             * @description Partner's next line in simple English, max 15 words.
+             */
+            en: string;
+            /**
+             * Tr
+             * @description Natural Turkish translation of the line.
+             */
+            tr: string;
+        };
         /** PlacementAnswer */
         PlacementAnswer: {
             /** Question Id */
@@ -643,6 +741,11 @@ export interface components {
         Recorded: {
             /** Id */
             id: number;
+        };
+        /** ReplyRequest */
+        ReplyRequest: {
+            /** Text */
+            text: string;
         };
         /** ReportView */
         ReportView: {
@@ -699,6 +802,13 @@ export interface components {
             listening: number;
             /** Writing */
             writing: number;
+        };
+        /** TurnView */
+        TurnView: {
+            /** Learner */
+            learner: string;
+            feedback: components["schemas"]["FeedbackView"] | null;
+            partner: components["schemas"]["PartnerLine"];
         };
         /** ValidationError */
         ValidationError: {
@@ -1350,6 +1460,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WritingTask"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_api_practice_dialogue_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DialogueView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_dialogue_api_practice_dialogue__activity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DialogueView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_reply_api_practice_dialogue__activity_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                activity_id: number;
+            };
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DialogueView"];
                 };
             };
             /** @description Validation Error */

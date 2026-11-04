@@ -243,7 +243,7 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 ## 6.4 Etkinlik üretimi (uygulandı, `api/app/sessions/`)
 
 - **Akış (`generation.py`):** tekrar motoru öğeleri seçer (günlük süreye göre en fazla 6 tekrar + 3 yeni; 15 dk) → kısa türlerde (hatırlama, yeni öğe) başkası için üretilmiş onaylı içerik yeniden kullanılır → kalanlar için tek Haiku çağrısı (`prompts/session/v2.md`) → her etkinlik ayrı doğrulanır (`validation.py`) → kalanlar için bir çağrı daha → yine kalırsa LLM'siz şablon (`templates.py`; okuma için şablon yok, oturumdan çıkar). Reddedilen her çıktı `status = rejected` ile saklanır (Işıl'ın denetimi için).
-- **Türler:** yeni öğe (anlam + 2 örnek + kontrol sorusu), hatırlama (3 şıklı boşluk doldurma + Türkçe ipucu), mikro okuma (50–80 kelime + 2 soru), yazma görevi. Dinleme (TTS) ve yazılı diyalog henüz yok.
+- **Türler:** yeni öğe (anlam + 2 örnek + kontrol sorusu), hatırlama (3 şıklı boşluk doldurma + Türkçe ipucu), mikro okuma (50–80 kelime + 2 soru), yazma görevi. Dinleme (TTS) henüz yok; yazılı diyalog ek çalışmada (6.11).
 - **Değerlendirme (`service.py`):** cevap sunucuda değerlendirilir; öğrenciye giden görünümde cevap yoktur. Derece: yanlış → Again, ipuçlu doğru → Hard, doğru → Good; okuma soruları derecelendirilmez. Aynı soru iki kez sayılmaz. Tüm etkinlikler bitince `session_completed`.
 - **Uç noktalar:** `GET /api/session/today`, `POST /api/activities/{id}/answer`; `POST /api/feedback` oturum etkinliğinde görevi sunucudaki içerikten okur.
 - **İlk gerçek ölçüm (3 Kas 2026, geliştirme içeriğiyle):** oturum başı ~$0.003 (2 Haiku çağrısı; ikincisi önbellekten 2.958 token okudu). Süre ~23 sn: kullanıcı bekletilemez, **gece ön üretimi (procrastinate işi) pilot öncesi şart**. Reddedilen 5 çıktının hepsi seviye kontrolündendi: çekim kuralları (`friends→friend`, `watching→watch`) eklendi ve geliştirme kelime listesi genişletildi; aynı 5 çıktı yeniden doğrulamada geçti. Gerçek seviye listesi (EVP ya da açık frekans listesi) hâlâ açık karar.
@@ -292,12 +292,22 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 
 ## 6.10 Ek çalışma (uygulandı, `api/app/sessions/extra.py`)
 
-- **Türler:** Tekrar ve Okuma talep anında üretilir; Yazma şablon görevle (öğe tekrar motorundan). Dinleme (TTS) ve yazılı diyalog henüz yok, panelde "yakında".
+- **Türler:** Tekrar ve Okuma talep anında üretilir; Yazma şablon görevle (öğe tekrar motorundan); Yazılı diyalog için bkz. 6.11. Dinleme (TTS) henüz yok, panelde "yakında".
 - **Öğeler kural katmanından:** önce vadesi gelen tekrarlar, sonra en zorlanılanlar (çok unutulan, düşük kararlılık). Hiç öğe görülmemişse ek çalışma açılmaz ("önce bugünün oturumunu yap").
 - **Aynı üretim hattı:** oturumdan ayrıştırılan `build_activities` (yeniden kullanım → Haiku → etkinlik başına doğrulama → bir kez daha → şablon → kayıt). Ek çalışma etkinlikleri `origin = extra`, oturuma bağlı değil; cevaplar aynı sunucu değerlendirmesinden geçer.
 - **"Önerilen" (H7):** müfredatın bu haftaki beceri ağırlığı ile bu hafta gerçekten ayrılan süre arasındaki en büyük açık. Her seçimde `extra_activity_chosen` olayı (önerilen ve seçilen tür) yazılır; etkinlikteki `recommended` alanı seçimin öneriyle aynı olup olmadığını tutar.
 - **Uç noktalar ve ekran:** `GET /api/practice/recommendation`, `POST /api/practice/extra`; `/practice/recall`, `/practice/reading`. Oturum ve ek çalışma aynı `ActivityQueue` bileşenini kullanır.
 - **Gerçek deneme (4 Kas 2026):** Okuma önerildi (hafta içinde okumaya hiç zaman ayrılmamıştı); Tekrar seçildi (4 soru, 3,4 sn), sonra Okuma (6,4 sn); ikisi de < $0.001, seçimler ve öneri ayrı kaydedildi.
+
+## 6.11 Yazılı diyalog (uygulandı, `api/app/dialogue/`)
+
+- **Kural katmanı seçer:** senaryo hedefe göre (`scenarios.py`; amaç başına 3 günlük durum, kullanıcının önceki diyalog sayısıyla döner), hedef öğeler ek çalışmayla aynı yerden (vadesi gelen, sonra zorlanılan; en fazla 2, hiç öğe yoksa hedefsiz). Senaryo metinleri ve açılış cümleleri sabit (taslak, **Işıl onayı bekliyor**): diyalog LLM'siz, anında başlar.
+- **Tur başına tek Sonnet çağrısı** (`purpose = dialogue`, prompt `dialogue/v1`): öğrencinin son cümlesine yazma geri bildirimiyle aynı şemada değerlendirme + partnerin sıradaki cümlesi + `done`. Statik blok (rol, kurallar, hata kataloğu) 1 saatlik önbellekte; görev bloğu konuşmayı baştan sona yalnızca ekleyerek taşır.
+- **Doğrulama:** geri bildirim yazma doğrulayıcısından (`validate_feedback`) geçer; geçemezse gösterilmez ve ertelenmez (canlı konuşmada sonradan düzeltme işe yaramaz; yeniden deneme işi diyalog cümlelerini atlar). Partner cümlesi seviye kontrolünden geçer (izinli isimler/şehirler, hedef öğeler ve öğrencinin kendi kelimeleri serbest; 1–20 kelime; Türkçe çevirisi dolu). Geçemezse bir kez daha istenir, sonra sabit cümle ("I see. Can you tell me more?" / 4. turdan sonra kapanış). Reddedilen partner cümleleri `dialogue_partner_rejected` olarak loglanır.
+- **Tur sınırları kural katmanında:** en az 4, en fazla 6 öğrenci cümlesi; model 4'ten önce bitiremez, 6. turda bitirmesi istenir ve diyalog her durumda kapanır. Biten diyaloğa cevap 409.
+- **Kayıt:** öğrencinin cümlesi `writing_submitted`, partnerin cevabı `dialogue_replied` olayı (tur, geri bildirim id'si, cümle, kaynak llm/fallback, bitti mi). Konuşma geçmişi yalnızca olaylardan kurulur. Diyalog içeriği `activity_contents`'te `kind = dialogue` (paylaşılmaz), etkinlik `origin = extra`; seçim `extra_activity_chosen` ile kaydedilir (H7). Diyalog cümleleri FSRS derecesi üretmez (hedef öğeyi sınamak için yazılmıyor); hata işaretleri haftalık rapordaki en sık hataya girer.
+- **Ekran (`/practice/dialogue`):** senaryo kartı, sohbet balonları (partner cümlesinin Türkçesi istenince), her öğrenci cümlesinin altında kısa geri bildirim: işaret + ipucu, "Açıklamayı göster" ile katalog açıklaması ve anladım/anlamadım (H5). Doğru cümle gösterilmez; konuşma akmaya devam eder.
+- **Gerçek deneme (4 Kas 2026, iş senaryosu):** 5 turda doğal kapanış; 2 hata (ARTICLE, TENSE) ipucuyla işaretlendi, 3 cümle doğru, tüm geri bildirimler doğrulayıcıdan geçti. 6 çağrı (bir partner cümlesi yeniden istendi), 2–5 sn; ilk çağrı önbellek yazımıyla ~$0.011, sonrakiler ~$0.002 (2.224 token önbellekten); diyalog başına ~$0.026. **Gözlem:** "I work as engineer" cümlesinde artikel işareti bir kelime erken kondu (model karakter konumunu kaydırdı); yazma geri bildiriminde de olabilecek ortak bir risk, konumun sunucuda bulunması ayrı bir iyileştirme olarak duruyor.
 
 ## 7. Arka plan işleri ve zamanlama
 

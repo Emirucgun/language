@@ -14,7 +14,7 @@ const EXTRA = [
   { kind: "reading", href: "/practice/reading", label: "Okuma", ready: true },
   { kind: "writing", href: "/practice/writing", label: "Yazma", ready: true },
   { kind: "listening", href: "#", label: "Dinleme", ready: false },
-  { kind: "dialogue", href: "#", label: "Yazılı diyalog", ready: false },
+  { kind: "dialogue", href: "/practice/dialogue", label: "Yazılı diyalog", ready: true },
 ];
 
 export default function PanelPage() {

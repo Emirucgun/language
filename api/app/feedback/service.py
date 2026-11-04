@@ -66,12 +66,12 @@ def _recent_codes(session: Session, user_id: uuid.UUID, item_ids: Sequence[int])
     return list(rows)
 
 
-def _catalog(session: Session) -> dict[str, ErrorTag]:
+def active_tags(session: Session) -> dict[str, ErrorTag]:
     tags = session.scalars(select(ErrorTag).where(ErrorTag.active)).all()
     return {t.code: t for t in tags}
 
 
-def _store(
+def store_feedback(
     session: Session,
     *,
     writing_event_id: int,
@@ -178,7 +178,7 @@ def assess_writing(
         )
     except DailyLimitExceeded:
         validation.add("daily_limit", "kullanıcının günlük LLM limiti doldu")
-        _store(
+        store_feedback(
             session,
             writing_event_id=writing.id,
             llm_call_id=None,
@@ -188,7 +188,7 @@ def assess_writing(
         )
         return FeedbackView(status="deferred", feedback_id=None, writing_event_id=writing.id)
 
-    catalog = _catalog(session)
+    catalog = active_tags(session)
     if parsed is None:
         validation.add("llm_failed", call.status)
     else:
@@ -199,7 +199,7 @@ def assess_writing(
             lexicon=lexicon or load_lexicon(session),
         )
     if parsed is None or not validation.ok:
-        feedback = _store(
+        feedback = store_feedback(
             session,
             writing_event_id=writing.id,
             llm_call_id=call.id,
@@ -209,7 +209,7 @@ def assess_writing(
         )
         return FeedbackView(status="deferred", feedback_id=feedback.id, writing_event_id=writing.id)
 
-    feedback = _store(
+    feedback = store_feedback(
         session,
         writing_event_id=writing.id,
         llm_call_id=call.id,
@@ -238,7 +238,7 @@ def stored_view(session: Session, feedback: Feedback) -> FeedbackView:
         return FeedbackView(
             status="deferred", feedback_id=feedback.id, writing_event_id=feedback.writing_event_id
         )
-    catalog = _catalog(session)
+    catalog = active_tags(session)
     marks = session.scalars(
         select(ErrorMark)
         .where(ErrorMark.feedback_id == feedback.id, ErrorMark.shown)

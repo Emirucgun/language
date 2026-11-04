@@ -35,6 +35,12 @@ _PENDING = text(
       )
       AND (SELECT count(*) FROM learning.feedbacks f WHERE f.writing_event_id = e.id) < :attempts
       AND EXISTS (SELECT 1 FROM learning.feedbacks f WHERE f.writing_event_id = e.id)
+      -- Diyalog cümleleri ertelenmez: canlı konuşmada sonradan gelen düzeltme işe yaramaz.
+      AND NOT EXISTS (
+        SELECT 1 FROM learning.activities a
+        JOIN learning.activity_contents c ON c.id = a.content_id
+        WHERE a.id = e.activity_id AND c.kind = 'dialogue'
+      )
     ORDER BY e.id
     """
 )
