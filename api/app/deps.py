@@ -15,6 +15,7 @@ from app.auth.models import AuthSession, User
 from app.config import settings
 from app.db import SessionLocal
 from app.llm.client import AnthropicClient, LLMClient
+from app.llm.service import contains_email
 
 
 def get_db() -> Iterator[Session]:
@@ -44,6 +45,15 @@ def get_email_sender() -> EmailSender:
 
 def hash_secret(value: str) -> bytes:
     return hashlib.sha256(value.encode()).digest()
+
+
+def reject_personal_data(text: str) -> None:
+    """E-posta içeren metin kaydedilmeden geri çevrilir; öğrencinin ekranında kalır."""
+    if contains_email(text):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "Metninde e-posta adresi var. Lütfen kişisel bilgi yazma; adresi silip tekrar gönder.",
+        )
 
 
 Db = Annotated[Session, Depends(get_db)]

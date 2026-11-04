@@ -92,12 +92,12 @@ def test_anthropic_request_shape(monkeypatch: pytest.MonkeyPatch) -> None:
 
     captured: dict[str, Any] = {}
 
-    def fake_parse(**kwargs: Any) -> Any:
+    def fake_create(**kwargs: Any) -> Any:
         captured.update(kwargs)
         raise RuntimeError("stop")
 
     client = AnthropicClient(api_key="test")
-    monkeypatch.setattr(client._client.beta.messages, "parse", fake_parse)
+    monkeypatch.setattr(client._client.beta.messages, "create", fake_create)
     request = LLMRequest(
         config=purpose_config("feedback"),
         static_block="static",
@@ -109,8 +109,8 @@ def test_anthropic_request_shape(monkeypatch: pytest.MonkeyPatch) -> None:
         client.complete(request)
 
     assert captured["model"] == "claude-sonnet-5-5"
-    assert captured["output_format"] is WritingFeedback
-    assert captured["output_config"] == {"effort": "medium"}
+    assert captured["output_config"]["effort"] == "medium"
+    assert captured["output_config"]["format"]["type"] == "json_schema"
     assert captured["betas"] == [FALLBACK_BETA] and captured["fallbacks"] == "default"
     assert "temperature" not in captured  # güncel API bunu reddediyor
     assert len(captured["system"]) == 1  # özet yoksa ikinci blok yok

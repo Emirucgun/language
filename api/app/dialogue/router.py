@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.deps import ConsentedUser, Db, get_llm_client
+from app.deps import ConsentedUser, Db, get_llm_client, reject_personal_data
 from app.dialogue import service
 from app.dialogue.schemas import DialogueView, ReplyRequest
 from app.llm.client import LLMClient
@@ -39,6 +39,7 @@ def post_reply(
     client: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> DialogueView:
     """Bir öğrenci cümlesi → geri bildirim + partnerin cevabı (birkaç saniye). Tüm görünüm döner."""
+    reject_personal_data(body.text)
     dialogue = _load(db, user, activity_id)
     try:
         service.reply(db, client, dialogue, body.text.strip())

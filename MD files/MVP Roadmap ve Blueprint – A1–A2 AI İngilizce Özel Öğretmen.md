@@ -139,7 +139,7 @@ Bu modelde **öğe listesi küratörlü, etkinlikler canlı üretilir.** Işıl 
 
 **Müfredat iskeleti.** A1–A2 hedefleri CEFR "yapabilir" tanımları, English Vocabulary Profile (kelime ve kalıp), English Grammar Profile (yapılar) ve Türkçe kaynaklı hata örüntülerinin kesişiminden seçilir (soru ÖT1). Bu profillerin ürün içinde yeniden kullanım koşulları henüz kontrol edilmedi; Faz 0'da lisans/kullanım şartları okunmalı.
 
-**Başlangıç havuzu.** 8 hafta × 6 gün × yaklaşık 4 yeni öğe = yaklaşık 200 öğe (kelime, kalıp ve yapı karışık). Her öğe için Türkçe karşılık ve en az bir hata riski notu hazırlanır; örnek cümleleri önceden yazmak gerekmez, yalnızca üretimi yönlendiren birkaç referans cümle yeterlidir.
+**Başlangıç havuzu.** Yaklaşık 200 öğe (kelime, kalıp ve yapı karışık). Günlük yeni öğe sayısı ayrılan süreye bağlıdır: 10 dakikada 2, 15–20 dakikada 3, daha uzunda 4. Yani 8 hafta × 6 gün boyunca öğrenci 96–192 öğe görür; varsayılan 15 dakikada 144. Havuz en hızlı öğrenciye de yetecek büyüklükte tutulur. Her öğe için Türkçe karşılık ve en az bir hata riski notu hazırlanır; örnek cümleleri önceden yazmak gerekmez, yalnızca üretimi yönlendiren birkaç referans cümle yeterlidir.
 
 **İçerik hattı**
 

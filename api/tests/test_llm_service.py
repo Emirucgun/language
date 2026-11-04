@@ -16,7 +16,6 @@ from app.config import settings
 from app.feedback.llm_schema import WritingFeedback
 from app.llm.service import (
     DailyLimitExceeded,
-    PersonalDataInPrompt,
     Prompt,
     calls_today,
     generate_structured,
@@ -114,15 +113,17 @@ def test_daily_limit_is_enforced(session: Session, monkeypatch: pytest.MonkeyPat
 
 def test_email_never_reaches_the_model(session: Session) -> None:
     client = FakeClient()
-    with pytest.raises(PersonalDataInPrompt):
-        generate_structured(
-            session,
-            client,
-            prompt=_prompt("Learner: my mail is ali@example.com"),
-            output_type=WritingFeedback,
-            user_id=_user(session),
-        )
+    parsed, call = generate_structured(
+        session,
+        client,
+        prompt=_prompt("Learner: my mail is ali@example.com"),
+        output_type=WritingFeedback,
+        user_id=_user(session),
+    )
     assert client.requests == []
+    assert parsed is None  # çağıran yedek yola geçer; istek çökmez
+    assert call.status == "error"
+    assert call.raw_on_failure == "personal_data"  # adresin kendisi kayda girmez
 
 
 def test_snapshot_is_saved_once_and_has_no_identity(session: Session) -> None:

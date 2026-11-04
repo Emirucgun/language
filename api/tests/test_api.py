@@ -259,6 +259,42 @@ def test_writing_task_returns_a_real_item(
     assert len(task["target_item_ids"]) == 1 and task["item_en"] in task["task"]
 
 
+def test_email_in_writing_is_refused_and_never_stored(
+    client: TestClient, sender: FakeSender, engine: object, item_id: int
+) -> None:
+    _login(client, sender, engine)
+    _consent(client)
+    r = client.post(
+        "/api/feedback",
+        json={"text": "Mail me: ali@example.com", "task": "t", "target_item_ids": [item_id]},
+    )
+    assert r.status_code == 422
+    assert "kişisel bilgi" in r.json()["detail"]  # web bu metni gösterir
+    with engine.connect() as conn:  # type: ignore[attr-defined]
+        stored = conn.scalar(
+            text("SELECT count(*) FROM learning.events WHERE payload::text LIKE '%ali@example%'")
+        )
+    assert stored == 0
+
+
+def test_email_in_interests_is_refused(
+    client: TestClient, sender: FakeSender, engine: object
+) -> None:
+    _login(client, sender, engine)
+    _consent(client)
+    r = client.post(
+        "/api/onboarding/goals",
+        json={
+            "goal": "work",
+            "daily_minutes": 15,
+            "weak_skills": [],
+            "interests": ["ali@example.com"],
+        },
+    )
+    assert r.status_code == 422
+    assert client.get("/api/auth/me").json()["goal"] is None
+
+
 # --- İstemci olayları --------------------------------------------------------
 
 

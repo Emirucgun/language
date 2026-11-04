@@ -4,7 +4,8 @@ import os
 import re
 import uuid
 from collections.abc import Iterator
-from datetime import date
+from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import psycopg
 import pytest
@@ -13,13 +14,15 @@ from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.models import User
+from app.curriculum.models import Curriculum
 from app.curriculum.schemas import CurriculumDraft
 from app.llm.client import LLMRequest, LLMResult
 from app.llm.pricing import Usage
 from app.scheduler.models import ItemState
 from app.sessions import service
-from app.sessions.generation import ensure_session
+from app.sessions.generation import ensure_session, plan_session
 from app.sessions.models import Activity, ActivityContent
+from app.sessions.router import writing_task
 from app.sessions.schemas import (
     AnswerRequest,
     Choice,
@@ -184,6 +187,62 @@ def _kinds(db: Session, session_id: int) -> list[tuple[str, str]]:
         .order_by(Activity.position)
     ).all()
     return [(k, o) for k, o in rows]
+
+
+def _state(db: Session, user: User, item_id: int, due: datetime) -> None:
+    db.add(ItemState(user_id=user.id, item_id=item_id, state=2, due=due, last_event_id=1))
+    db.flush()
+
+
+def test_items_due_later_today_are_selected_in_the_learners_time_zone(
+    db: Session, item_ids: list[int]
+) -> None:
+    """03:00'te üretilen oturum gün içinde vadesi dolacakları da kapsar; yarınkileri almaz."""
+    user = _user(db)
+    user.timezone = "Asia/Tokyo"  # UTC+9: UTC gün sonu ile yerel gün sonu farklı
+    zone = ZoneInfo(user.timezone)
+    tonight, tomorrow, _ = item_ids
+    _state(db, user, tonight, datetime.combine(TODAY, time(23, 30), zone))
+    _state(db, user, tomorrow, datetime.combine(TODAY + timedelta(days=1), time(0, 30), zone))
+
+    plan = plan_session(db, user, TODAY)
+
+    assert [c.id for c in plan.review] == [tonight]
+
+
+def _curriculum(db: Session, user: User, order: list[int]) -> None:
+    weeks = [{"week": 1, "item_ids": order}]
+    db.add(Curriculum(user_id=user.id, version=1, weeks=weeks, skill_weights={}))
+    db.flush()
+
+
+def test_free_writing_follows_the_curriculum(db: Session, item_ids: list[int]) -> None:
+    user = _user(db)
+    planned = item_ids[-1]  # havuz sırasında sonda
+    _curriculum(db, user, [planned, *item_ids[:-1]])
+
+    assert writing_task(db, user).target_item_ids == [planned]
+
+
+def test_free_writing_skips_seen_items_in_curriculum_order(
+    db: Session, item_ids: list[int]
+) -> None:
+    user = _user(db)
+    first, second, _ = item_ids
+    _curriculum(db, user, [first, second])
+    _state(db, user, first, datetime.now(UTC) + timedelta(days=5))
+
+    assert writing_task(db, user).target_item_ids == [second]
+
+
+def test_free_writing_never_leaves_the_plan_when_everything_is_seen(
+    db: Session, item_ids: list[int]
+) -> None:
+    user = _user(db)
+    _curriculum(db, user, item_ids[:1])
+    _state(db, user, item_ids[0], datetime.now(UTC) + timedelta(days=5))
+
+    assert writing_task(db, user).target_item_ids == item_ids[:1]
 
 
 def test_valid_output_builds_the_session_in_one_call(db: Session, item_ids: list[int]) -> None:

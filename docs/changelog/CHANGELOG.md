@@ -4,6 +4,13 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-04 | Yarım yanıt ve ret artık çökmüyor: adaptör `create` ile çağırıp kendisi doğrular, başarısız çağrının maliyeti de kaydedilir | OA-3 |
+| 2026-11-04 | E-posta içeren metin ve ilgi alanı istekte reddedilir, hiçbir şey saklanmaz; LLM kapısı artık istisna fırlatmaz | EK-2 |
+| 2026-11-04 | Yerleştirme testi bitmeden gece üretimi yapılmaz | EK-3 |
+| 2026-11-04 | Yol haritasında hafta numarası yeniden planda sıfırlanmıyor | EK-4 |
+| 2026-11-04 | Serbest yazma görevi müfredat sırasını izliyor | EK-5 |
+| 2026-11-04 | Günlük kota tek tanımda (`scheduler/quotas.py`); 200 öğeli kapasite testleri; blueprint düzeltildi | DZ-6 |
+| 2026-11-04 | Yerel gün sonu vade kesimi testi | DZ-7 |
 | 2026-11-04 | Işıl'ın dört tablosu (`content/templates/`) ve satır bazlı raporlu içe aktarma betikleri | GL-2, GL-1 |
 | 2026-11-04 | `docs/` iskeleti, durum tablosu, ADR ve deney şablonları | DK-1 |
 | 2026-11-04 | Kök `AGENTS.md` ve onu yükleyen `CLAUDE.md` | DK-8 |

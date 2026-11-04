@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps import ConsentedUser, Db, get_llm_client
+from app.deps import ConsentedUser, Db, get_llm_client, reject_personal_data
 from app.feedback.retry import ready_for
 from app.feedback.service import FeedbackView, give_feedback, submit_rewrite
 from app.llm.client import LLMClient
@@ -53,6 +53,7 @@ def post_writing(
     user: ConsentedUser,
     client: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> FeedbackView:
+    reject_personal_data(body.text)
     activity = None
     if body.activity_id is not None:
         try:

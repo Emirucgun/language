@@ -26,6 +26,7 @@ from app.llm.prompts import render_static
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
+from app.scheduler.quotas import daily_quota
 from app.scheduler.service import lock_user, select_items
 from app.sessions.models import Activity, ActivityContent, StudySession
 from app.sessions.schemas import ActivityModel, Kind, SessionOutput
@@ -80,19 +81,10 @@ def _card(item: Item) -> ItemCard:
     return ItemCard(item.id, item.text_en, item.text_tr, tuple(item.forms))
 
 
-def _quotas(daily_minutes: int | None) -> tuple[int, int]:
-    minutes = daily_minutes or 15
-    if minutes <= 10:
-        return 4, 2
-    if minutes <= 20:
-        return 6, 3
-    return 8, 4
-
-
 def plan_session(
     db: Session, user: User, local_date: date, curriculum_order: list[int] | None = None
 ) -> SessionPlan:
-    max_reviews, max_new = _quotas(user.daily_minutes)
+    quota = daily_quota(user.daily_minutes)
     start_level, cefr_sub = user_level(db, user.id)
     items = list(
         db.scalars(
@@ -115,8 +107,8 @@ def plan_session(
         user.id,
         due_before=end_of_day,
         candidate_new_ids=new_order,
-        max_reviews=max_reviews,
-        max_new=max_new,
+        max_reviews=quota.max_reviews,
+        max_new=quota.max_new,
     )
     review = [by_id[i] for i in selection.review_item_ids if i in by_id]
     new = [by_id[i] for i in selection.new_item_ids]

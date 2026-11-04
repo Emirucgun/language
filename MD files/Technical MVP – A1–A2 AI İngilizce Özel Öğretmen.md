@@ -267,10 +267,10 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 ## 6.7 Müfredat ajanı (uygulandı, `api/app/curriculum/`)
 
 - **Öneri:** Sonnet 5.5 (`prompts/curriculum/v1.md`) öğrenci özeti, haftalık kapasite ve tüm öğe havuzunu (id, İngilizce, Türkçe, seviye) alır; 8 haftalık plan döner: haftalık odak, öğeler, 1–3 Türkçe "yapabilirim" maddesi, beceri ağırlıkları, kısa özet.
-- **Kural katmanı (`rules.py`):** tam 8 hafta; yalnızca havuzdaki öğeler; her öğe bir kez; hafta başına en fazla kapasite (günlük yeni öğe × 6 gün); havuzun en az %80'i planlanmış; odak ve "yapabilirim" dolu. Ağırlık toplamı, metin uzunlukları gibi küçük kusurlar düzeltilir. Ret sebepleri ajana geri verilip bir kez daha sorulur; yine geçmezse deterministik yedek plan (havuz sırası haftalara bölünür) kaydedilir. Öğrenci her durumda plan görür.
+- **Kural katmanı (`rules.py`):** tam 8 hafta; yalnızca havuzdaki öğeler; her öğe bir kez; hafta başına en fazla kapasite (günlük yeni öğe × 6 gün; kota tek yerde, `scheduler/quotas.py`); havuz ile 8 haftalık kapasiteden küçük olanının en az %80'i planlanmış; odak ve "yapabilirim" dolu. Ağırlık toplamı, metin uzunlukları gibi küçük kusurlar düzeltilir. Ret sebepleri ajana geri verilip bir kez daha sorulur; yine geçmezse deterministik yedek plan (havuz sırası haftalara bölünür) kaydedilir. Öğrenci her durumda plan görür.
 - **Kayıt:** her plan `curricula`'da yeni sürüm; kaynak (agent / fallback), özet ve genel ağırlıklar plan satırında; `curriculum_created` / `curriculum_replanned` olayı.
 - **Etkisi:** oturum üretimi yeni öğeleri müfredat sırasıyla alır: bu haftanın öğeleri, sonra sonraki haftalar, en son geride kalanlar.
-- **Ekran:** `/curriculum` içindekiler gibi; şu anki hafta işaretli, süre "tahmin" olarak gösterilir (SK6). Panelde "Planın" bağlantısı.
+- **Ekran:** `/curriculum` içindekiler gibi; şu anki hafta işaretli (yeniden planda numara sıfırlanmaz, sürüm kadar kayar), süre "tahmin" olarak gösterilir (SK6). Panelde "Planın" bağlantısı.
 - **İlk gerçek çalışma (4 Kas 2026):** ilk denemede kurallardan geçti, 9,0 sn, ~$0.02; geliştirme havuzu yalnızca 10 öğe olduğu için haftalar 2'şer öğe. Temalar hedef ve ilgi alanlarıyla uyumlu ("İşimi ve yaşadığım yeri tanıtma", "Sevdiklerim: futbol ve yemek"), son haftalar pekiştirme.
 - **Haftalık yeniden planlama:** aşağıdaki 6.8.
 
