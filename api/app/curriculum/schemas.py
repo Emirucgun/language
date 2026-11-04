@@ -1,7 +1,7 @@
 """Müfredat: ajanın (LLM) önerisi ve kural katmanının onayladığı hali.
 
 Ajan yalnızca havuzdaki öğelerden, seviye sınırları içinde plan kurabilir; kural katmanı
-her öneriyi doğrular (docs/architecture/flows.md: "Müfredat ajanı öneri yapar, kural katmanı onaylar").
+her öneriyi doğrular (docs/architecture/flows.md).
 Süre ve seviye vaat değil tahmindir: ekranda aralık olarak gösterilir.
 """
 
