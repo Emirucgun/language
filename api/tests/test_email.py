@@ -99,8 +99,8 @@ class Broken:
 
 
 def test_failed_send_returns_503_and_stores_no_token(
-    client: TestClient,  # noqa: F811 - test_api'deki fixture
-    engine: Engine,  # noqa: F811
+    client: TestClient,
+    engine: Engine,
 ) -> None:
     app.dependency_overrides[get_email_sender] = lambda: Broken()
     email = _email()

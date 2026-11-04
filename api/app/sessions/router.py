@@ -1,7 +1,7 @@
-"""Bugünün oturumu, cevaplar ve (geçici) serbest yazma pratiği."""
+"""Bugünün oturumu, cevaplar ve ek çalışma (tekrar, okuma, yazma)."""
 
 from datetime import UTC, date, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,9 +13,10 @@ from app.content.models import Item
 from app.deps import ConsentedUser, Db, get_llm_client
 from app.llm.client import LLMClient
 from app.scheduler.service import select_items
-from app.sessions import service
+from app.sessions import extra, service
+from app.sessions.extra import ExtraKind
 from app.sessions.generation import ensure_session
-from app.sessions.schemas import AnswerRequest, AnswerResult, SessionView
+from app.sessions.schemas import ActivityView, AnswerRequest, AnswerResult, SessionView
 
 router = APIRouter(tags=["session"])
 
@@ -43,8 +44,47 @@ def post_answer(activity_id: int, body: AnswerRequest, db: Db, user: ConsentedUs
         raise HTTPException(status.HTTP_409_CONFLICT, "Bu soru zaten cevaplandı.") from exc
 
 
-# --- Serbest yazma pratiği (ek çalışma) -------------------------------------
-# GEÇİCİ: ek çalışma etkinlikleri talep anında üretilene kadar sabit bir görev cümlesi.
+# --- Ek çalışma -------------------------------------------------------------
+
+
+class Recommendation(BaseModel):
+    recommended: ExtraKind
+
+
+class ExtraRequest(BaseModel):
+    kind: Literal["recall", "reading"]
+
+
+class ExtraView(BaseModel):
+    kind: str
+    activities: list[ActivityView]
+
+
+@router.get("/api/practice/recommendation", tags=["practice"])
+def get_recommendation(db: Db, user: ConsentedUser) -> Recommendation:
+    return Recommendation(recommended=extra.recommend(db, user))
+
+
+@router.post("/api/practice/extra", tags=["practice"])
+def post_extra(
+    body: ExtraRequest,
+    db: Db,
+    user: ConsentedUser,
+    client: Annotated[LLMClient, Depends(get_llm_client)],
+) -> ExtraView:
+    """Seçildiği anda üretilir (birkaç saniye). Okuma üretilemezse etkinlik listesi boş döner."""
+    try:
+        ids = extra.generate_extra(db, client, user, body.kind)
+    except extra.NothingToPractise as exc:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "Ek çalışma için önce bugünün oturumunu yap."
+        ) from exc
+    views = [service.activity_view(db, *service.owned_activity(db, user.id, i)) for i in ids]
+    return ExtraView(kind=body.kind, activities=views)
+
+
+# --- Serbest yazma (ek çalışma) ----------------------------------------------
+# Yazma görevi tek cümle olduğu için LLM'siz şablon; öğe tekrar motorundan gelir.
 
 
 class WritingTask(BaseModel):

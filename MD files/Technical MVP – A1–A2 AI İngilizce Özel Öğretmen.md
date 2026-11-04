@@ -290,6 +290,15 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Öğrenciye:** gecikmeli hazırlanan ve henüz görülmemiş geri bildirimler `GET /api/feedback/ready` ile gelir; panelde "Geri bildirimlerin hazır (n)" kartı, `/feedback` sayfasında aynı akış (işaretli cümle → ipucu → açıklama → anladım/anlamadım → yeniden yaz → doğrusu). Görüldüğünde `feedback_shown` olayı `feedback_id` ile yazılır ve liste bir daha göstermez.
 - **Gerçek deneme (4 Kas 2026):** kesinti benzetimiyle ertelenen "My brother like football very much." saatlik işin yolundan Sonnet ile yeniden değerlendirildi: TENSE (üçüncü tekil -s), panelde göründü, yeniden yazmadan sonra doğrusu gösterildi, görülünce kart kalktı.
 
+## 6.10 Ek çalışma (uygulandı, `api/app/sessions/extra.py`)
+
+- **Türler:** Tekrar ve Okuma talep anında üretilir; Yazma şablon görevle (öğe tekrar motorundan). Dinleme (TTS) ve yazılı diyalog henüz yok, panelde "yakında".
+- **Öğeler kural katmanından:** önce vadesi gelen tekrarlar, sonra en zorlanılanlar (çok unutulan, düşük kararlılık). Hiç öğe görülmemişse ek çalışma açılmaz ("önce bugünün oturumunu yap").
+- **Aynı üretim hattı:** oturumdan ayrıştırılan `build_activities` (yeniden kullanım → Haiku → etkinlik başına doğrulama → bir kez daha → şablon → kayıt). Ek çalışma etkinlikleri `origin = extra`, oturuma bağlı değil; cevaplar aynı sunucu değerlendirmesinden geçer.
+- **"Önerilen" (H7):** müfredatın bu haftaki beceri ağırlığı ile bu hafta gerçekten ayrılan süre arasındaki en büyük açık. Her seçimde `extra_activity_chosen` olayı (önerilen ve seçilen tür) yazılır; etkinlikteki `recommended` alanı seçimin öneriyle aynı olup olmadığını tutar.
+- **Uç noktalar ve ekran:** `GET /api/practice/recommendation`, `POST /api/practice/extra`; `/practice/recall`, `/practice/reading`. Oturum ve ek çalışma aynı `ActivityQueue` bileşenini kullanır.
+- **Gerçek deneme (4 Kas 2026):** Okuma önerildi (hafta içinde okumaya hiç zaman ayrılmamıştı); Tekrar seçildi (4 soru, 3,4 sn), sonra Okuma (6,4 sn); ikisi de < $0.001, seçimler ve öneri ayrı kaydedildi.
+
 ## 7. Arka plan işleri ve zamanlama
 
 | İş | Ne zaman | Ne yapar |

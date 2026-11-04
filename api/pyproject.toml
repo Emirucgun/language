@@ -33,6 +33,10 @@ allowed-confusables = ["ı", "–"]
 # SQLAlchemy bildirimsel modellerinde `__table_args__` sözlükleri bu kuralı yanlış tetikler.
 ignore = ["RUF012"]
 
+[tool.ruff.lint.per-file-ignores]
+# pytest fixture'ları başka test modülünden içe aktarılıp parametre olarak alınır: F811 yanlış alarm.
+"tests/*" = ["F811"]
+
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]

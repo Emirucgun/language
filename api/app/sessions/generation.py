@@ -327,6 +327,40 @@ def ensure_session(
     full_plan = plan_session(db, user, local_date, new_item_order(curriculum))
     snapshot = daily_snapshot(db, user.id)
     study.snapshot_id = snapshot.id
+    build_activities(
+        db,
+        client,
+        user,
+        full_plan,
+        lexicon=lexicon,
+        origin="session",
+        session_id=study.id,
+        recommended=True,
+        # Şablonlar aynı öğe için tekrar eder; kullanıcı + gün ile ayrı içerik sayılır.
+        template_salt=f"template:{user.id}:{local_date}",
+    )
+    study.status = "ready"
+    db.flush()
+    return study
+
+
+def build_activities(
+    db: Session,
+    client: LLMClient,
+    user: User,
+    full_plan: SessionPlan,
+    *,
+    lexicon: Lexicon | None,
+    origin: str,
+    session_id: int | None,
+    recommended: bool,
+    template_salt: str,
+) -> list[int]:
+    """Plan → etkinlikler: yeniden kullanım, üretim, bir kez daha, şablon, kayıt.
+
+    Bugünün oturumu ve ek çalışma aynı yoldan geçer. Etkinlik id'lerini sırayla döner.
+    """
+    snapshot = daily_snapshot(db, user.id)
     lexicon = lexicon or load_lexicon(db)
 
     # 1. Yeniden kullanım: kısa türlerde başkası için üretilmiş onaylı içerik.
@@ -365,25 +399,26 @@ def ensure_session(
         _store_content(db, final, user, plan.cefr_sub, "rejected")
 
     finals.sort(key=lambda f: ORDER[f.kind])
+    activity_ids: list[int] = []
     for position, final in enumerate(finals):
-        # Şablonlar aynı öğe için tekrar eder; kullanıcı + gün ile ayrı içerik sayılır.
-        salt = f"template:{user.id}:{local_date}" if final.origin == "template" else ""
+        salt = template_salt if final.origin == "template" else ""
         content_id = final.content_id or _store_content(
             db, final, user, plan.cefr_sub, "approved", salt
         )
-        db.execute(
+        activity_id = db.scalar(
             insert(Activity)
             .values(
                 user_id=user.id,
-                session_id=study.id,
+                session_id=session_id,
                 content_id=content_id,
-                origin=final.origin,
-                recommended=True,
+                origin="template" if final.origin == "template" else origin,
+                recommended=recommended,
                 position=position,
             )
             .on_conflict_do_nothing(index_elements=["user_id", "content_id"])
+            .returning(Activity.id)
         )
-
-    study.status = "ready"
+        if activity_id is not None:
+            activity_ids.append(activity_id)
     db.flush()
-    return study
+    return activity_ids

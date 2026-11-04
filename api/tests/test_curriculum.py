@@ -114,7 +114,7 @@ class Planner:
 
 
 @pytest.fixture
-def db(migrated_db: Config, item_ids: list[int]) -> Iterator[Session]:  # noqa: F811
+def db(migrated_db: Config, item_ids: list[int]) -> Iterator[Session]:
     eng = create_engine(os.environ["TEST_APP_DATABASE_URL"])
     with Session(eng) as s:
         yield s
@@ -185,9 +185,9 @@ def test_new_item_order_starts_at_the_current_week() -> None:
 
 
 def test_curriculum_endpoint_falls_back_without_a_usable_llm(
-    client: TestClient,  # noqa: F811 - test_api'deki fixture
-    sender: FakeSender,  # noqa: F811
-    engine: object,  # noqa: F811
+    client: TestClient,
+    sender: FakeSender,
+    engine: object,
 ) -> None:
     _login(client, sender, engine)
     _consent(client)

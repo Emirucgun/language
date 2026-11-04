@@ -64,6 +64,8 @@ export const api = {
     request<void>("POST", "/api/onboarding/placement/answer", body),
   placementComplete: () =>
     request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
+  recommendation: () => request<Schemas["Recommendation"]>("GET", "/api/practice/recommendation"),
+  extra: (body: Schemas["ExtraRequest"]) => request<Schemas["ExtraView"]>("POST", "/api/practice/extra", body),
   readyFeedback: () => request<Schemas["ReadyFeedbackView"][]>("GET", "/api/feedback/ready"),
   latestReport: () => request<Schemas["ReportView"]>("GET", "/api/reports/latest"),
   curriculum: () => request<Schemas["CurriculumView"]>("GET", "/api/curriculum"),

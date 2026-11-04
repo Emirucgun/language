@@ -26,7 +26,7 @@ from tests.test_session import item_ids  # noqa: F401 - havuzda öğe olsun
 
 
 @pytest.fixture
-def db(migrated_db: Config, item_ids: list[int]) -> Iterator[Session]:  # noqa: F811
+def db(migrated_db: Config, item_ids: list[int]) -> Iterator[Session]:
     with psycopg.connect(_libpq_url("TEST_DATABASE_URL")) as conn:
         conn.execute(
             "INSERT INTO content.error_tags (code, name_tr, explanation_tr) VALUES "
@@ -77,7 +77,7 @@ def _event(
     ).scalar_one()
 
 
-def _busy_week(db: Session, user: User, item_ids: list[int]) -> None:  # noqa: F811
+def _busy_week(db: Session, user: User, item_ids: list[int]) -> None:
     """Zorlanan bir hafta: 6 cevabın 2'si doğru, bir yazma hatası, bir "anlamadım"."""
     for n, rating in enumerate([3, 1, 1, 3, 1, 1]):
         _event(db, user, "answer_submitted", item_id=item_ids[n % 2], rating=rating)
@@ -104,7 +104,7 @@ def _busy_week(db: Session, user: User, item_ids: list[int]) -> None:  # noqa: F
     _event(db, user, "session_completed", payload='{"session_id": 1}')
 
 
-def test_metrics_come_from_this_weeks_events_only(db: Session, item_ids: list[int]) -> None:  # noqa: F811
+def test_metrics_come_from_this_weeks_events_only(db: Session, item_ids: list[int]) -> None:
     user = _user(db)
     _busy_week(db, user, item_ids)
     _event(
@@ -125,7 +125,7 @@ def test_metrics_come_from_this_weeks_events_only(db: Session, item_ids: list[in
     assert m.pace == "slow"
 
 
-def test_weekly_review_replans_slower_without_seen_items(db: Session, item_ids: list[int]) -> None:  # noqa: F811
+def test_weekly_review_replans_slower_without_seen_items(db: Session, item_ids: list[int]) -> None:
     user, planner = _user(db), Planner()
     ensure_curriculum(db, planner, user)
     _busy_week(db, user, item_ids)
@@ -161,7 +161,7 @@ def test_review_job_is_queued_once_per_user_and_week(monkeypatch: pytest.MonkeyP
     assert [j["args"] for j in queued] == [{"user_id": str(user_id), "week_start": "2026-11-02"}]
 
 
-def test_latest_report_endpoint(client: TestClient, sender: FakeSender, engine: object) -> None:  # noqa: F811
+def test_latest_report_endpoint(client: TestClient, sender: FakeSender, engine: object) -> None:
     _login(client, sender, engine)
     _consent(client)
     assert client.get("/api/reports/latest").status_code == 404

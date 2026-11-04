@@ -8,13 +8,13 @@ import { Button, Card, Loading, Screen } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useMe } from "@/lib/use-me";
 
-// Ek çalışma türleri; etkinlik üretimi gelene kadar yalnızca yazma açık.
+// Ek çalışma türleri. Dinleme TTS, yazılı diyalog ayrı özellik bekliyor.
 const EXTRA = [
-  { href: "/practice/writing", label: "Yazma", ready: true },
-  { href: "#", label: "Tekrar", ready: false },
-  { href: "#", label: "Okuma", ready: false },
-  { href: "#", label: "Dinleme", ready: false },
-  { href: "#", label: "Yazılı diyalog", ready: false },
+  { kind: "recall", href: "/practice/recall", label: "Tekrar", ready: true },
+  { kind: "reading", href: "/practice/reading", label: "Okuma", ready: true },
+  { kind: "writing", href: "/practice/writing", label: "Yazma", ready: true },
+  { kind: "listening", href: "#", label: "Dinleme", ready: false },
+  { kind: "dialogue", href: "#", label: "Yazılı diyalog", ready: false },
 ];
 
 export default function PanelPage() {
@@ -22,6 +22,7 @@ export default function PanelPage() {
   const router = useRouter();
   const [hasReport, setHasReport] = useState(false);
   const [readyCount, setReadyCount] = useState(0);
+  const [recommended, setRecommended] = useState<string | null>(null);
 
   useEffect(() => {
     if (!me) return;
@@ -34,6 +35,10 @@ export default function PanelPage() {
       .readyFeedback()
       .then((items) => setReadyCount(items.length))
       .catch(() => setReadyCount(0));
+    api
+      .recommendation()
+      .then((r) => setRecommended(r.recommended))
+      .catch(() => setRecommended(null));
   }, [me]);
 
   if (!me) return <Screen><Loading /></Screen>;
@@ -97,9 +102,12 @@ export default function PanelPage() {
               <Link
                 key={x.label}
                 href={x.href}
-                className="flex min-h-14 items-center justify-center rounded-xl border border-line bg-card font-medium hover:bg-muted"
+                className={`flex min-h-14 flex-col items-center justify-center rounded-xl border bg-card font-medium hover:bg-muted ${
+                  recommended === x.kind ? "border-accent" : "border-line"
+                }`}
               >
                 {x.label}
+                {recommended === x.kind && <span className="text-xs font-normal text-accent">Önerilen</span>}
               </Link>
             ) : (
               <span

@@ -271,6 +271,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/practice/recommendation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recommendation */
+        get: operations["get_recommendation_api_practice_recommendation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/practice/extra": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Extra
+         * @description Seçildiği anda üretilir (birkaç saniye). Okuma üretilemezse etkinlik listesi boş döner.
+         */
+        post: operations["post_extra_api_practice_extra_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/practice/writing-task": {
         parameters: {
             query?: never;
@@ -452,6 +489,21 @@ export interface components {
             /** Tr */
             tr: string;
         };
+        /** ExtraRequest */
+        ExtraRequest: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "recall" | "reading";
+        };
+        /** ExtraView */
+        ExtraView: {
+            /** Kind */
+            kind: string;
+            /** Activities */
+            activities: components["schemas"]["ActivityView"][];
+        };
         /**
          * FeedbackView
          * @description Öğrenciye dönen tek şey. Düzeltilmiş cümle burada yok (yeniden yazmadan sonra).
@@ -578,6 +630,14 @@ export interface components {
             /** Learner Text */
             learner_text: string;
             feedback: components["schemas"]["FeedbackView"];
+        };
+        /** Recommendation */
+        Recommendation: {
+            /**
+             * Recommended
+             * @enum {string}
+             */
+            recommended: "recall" | "reading" | "writing";
         };
         /** Recorded */
         Recorded: {
@@ -1193,6 +1253,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnswerResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_recommendation_api_practice_recommendation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Recommendation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_extra_api_practice_extra_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExtraRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtraView"];
                 };
             };
             /** @description Validation Error */

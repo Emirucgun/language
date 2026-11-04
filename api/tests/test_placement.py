@@ -88,7 +88,7 @@ def placement_test(migrated_db: Config) -> None:
 
 
 @pytest.mark.usefixtures("placement_test")
-def test_placement_flow(client: TestClient, sender: FakeSender, engine: object) -> None:  # noqa: F811
+def test_placement_flow(client: TestClient, sender: FakeSender, engine: object) -> None:
     _login(client, sender, engine)
     _consent(client)
     assert client.get("/api/auth/me").json()["placement_done"] is False

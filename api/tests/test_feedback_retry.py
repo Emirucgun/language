@@ -30,16 +30,16 @@ def small_lexicon(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("app.feedback.service.load_lexicon", lambda _db: LEXICON)
 
 
-def _deferred_writing(session: Session, user: uuid.UUID, item_id: int) -> int:  # noqa: F811
+def _deferred_writing(session: Session, user: uuid.UUID, item_id: int) -> int:
     view = _give(session, user, item_id, FakeClient(None))
     assert view.status == "deferred"
     return view.writing_event_id
 
 
 def test_deferred_writing_is_retried_and_becomes_ready(
-    session: Session,  # noqa: F811
-    user: uuid.UUID,  # noqa: F811
-    item_id: int,  # noqa: F811
+    session: Session,
+    user: uuid.UUID,
+    item_id: int,
 ) -> None:
     writing_id = _deferred_writing(session, user, item_id)
     assert writing_id in pending_writings(session)
@@ -65,15 +65,15 @@ def test_deferred_writing_is_retried_and_becomes_ready(
 
 
 def test_immediate_feedback_is_not_listed_as_ready(
-    session: Session,  # noqa: F811
-    user: uuid.UUID,  # noqa: F811
-    item_id: int,  # noqa: F811
+    session: Session,
+    user: uuid.UUID,
+    item_id: int,
 ) -> None:
     assert _give(session, user, item_id, FakeClient(_feedback())).status == "shown"
     assert ready_for(session, user) == []
 
 
-def test_attempts_are_capped(session: Session, user: uuid.UUID, item_id: int) -> None:  # noqa: F811
+def test_attempts_are_capped(session: Session, user: uuid.UUID, item_id: int) -> None:
     writing_id = _deferred_writing(session, user, item_id)
     for _ in range(MAX_ATTEMPTS):
         retry_writing(session, FakeClient(None), writing_id)
@@ -85,7 +85,7 @@ def test_attempts_are_capped(session: Session, user: uuid.UUID, item_id: int) ->
     assert retry_writing(session, FakeClient(_feedback()), writing_id) is None
 
 
-def test_old_writings_are_left_alone(session: Session, user: uuid.UUID, item_id: int) -> None:  # noqa: F811
+def test_old_writings_are_left_alone(session: Session, user: uuid.UUID, item_id: int) -> None:
     writing_id = _deferred_writing(session, user, item_id)
     # Olaylar uygulama rolüyle değiştirilemez; zamanı geriye almak için yeni, eski tarihli
     # bir yazı eklenir.
