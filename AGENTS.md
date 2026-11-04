@@ -6,7 +6,7 @@ A1–A2 seviyesinde Türkçe konuşan yetişkinler için yapay zeka destekli İn
 
 1. Sıradaki işler ve kimlikler (OA, DZ, GL, DK, EK): `MD files/Düzeltme ve Geliştirme Listesi.md`. İşin kabul ölçütü sağlanmadan kutu işaretlenmez.
 2. Durum: `docs/status.md`. Belge düzeni ve kurallar: `docs/README.md`.
-3. Mimari: `docs/architecture/`; taşınmamış konular için `MD files/Technical MVP – …md`.
+3. Mimari: `docs/architecture/`. Kararlar: `docs/decisions/`. Ölçümler: `docs/experiments/`.
 4. Bu belgeler kodu özetler, yerine geçmez. İddiayı kodda doğrula; çelişki bulursan belgeyi düzelt.
 
 ## Değişmez kurallar

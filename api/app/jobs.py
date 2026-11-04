@@ -1,4 +1,4 @@
-"""Arka plan işleri (procrastinate, Postgres tabanlı kuyruk; Technical MVP, 7).
+"""Arka plan işleri (procrastinate, Postgres tabanlı kuyruk; docs/architecture/jobs.md).
 
 Çalıştırma: `uv run python -m app.worker`. Kuyruk tabloları `procrastinate` şemasında
 (göç 0003); bağlantı bu şemayı `search_path` ile görür.

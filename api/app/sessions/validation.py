@@ -1,4 +1,4 @@
-"""Etkinlik başına doğrulama (Technical MVP, 6: doğrulayıcı tablosu)."""
+"""Etkinlik başına doğrulama (docs/architecture/validator.md)."""
 
 from dataclasses import dataclass
 

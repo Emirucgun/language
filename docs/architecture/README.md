@@ -2,15 +2,16 @@
 
 Sistemin bugünkü hali. Geçmiş burada değil, changelog ve deney kayıtlarında durur.
 
-Bu belgeler DK-2'de Teknik MVP belgesinden taşınır; o zamana kadar kaynak [Teknik MVP](../../MD%20files/Technical%20MVP%20%E2%80%93%20A1%E2%80%93A2%20AI%20%C4%B0ngilizce%20%C3%96zel%20%C3%96%C4%9Fretmen.md) belgesidir.
+Bir değişiklik buradaki bir cümleyi bayatlatıyorsa aynı commit'te düzeltilir.
 
 | Dosya | İçerik |
 | --- | --- |
-| `overview.md` | Katmanlar ve değişmez kurallar |
-| `data-model.md` | Tablolar ve olay şemaları |
-| `llm.md` | `LLMClient`, amaç→model tablosu, prompt sürümleme, önbellek |
-| `validator.md` | Doğrulayıcı kontrolleri ve sınırları |
-| `scheduler.md` | FSRS sarmalayıcı, öğe seçimi, derece eşlemesi |
-| `jobs.md` | Arka plan işleri ve zamanlama |
-| `security-privacy.md` | Kimlik, gizlilik, silme |
-| `testing.md` | Test stratejisi |
+| [overview.md](overview.md) | Yığın, depo, katmanlar, değişmez kurallar |
+| [data-model.md](data-model.md) | Tablolar ve olaylar |
+| [llm.md](llm.md) | `LLMClient`, amaç tablosu, prompt sürümleri, önbellek, ses |
+| [validator.md](validator.md) | Doğrulayıcı kontrolleri ve sınırları |
+| [scheduler.md](scheduler.md) | FSRS, öğe seçimi, derece eşlemesi, günlük kota |
+| [jobs.md](jobs.md) | Arka plan işleri ve zamanlama |
+| [security-privacy.md](security-privacy.md) | Kimlik, yetki, gizlilik, silme |
+| [testing.md](testing.md) | Test stratejisi |
+| [flows.md](flows.md) | Uygulama akışları: yerleştirme, müfredat, etkinlik, geri bildirim, diyalog, rapor, inceleme |

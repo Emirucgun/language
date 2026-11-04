@@ -1,6 +1,6 @@
 """Sağlayıcı soyutlaması. Uygulamanın geri kalanı yalnızca `LLMClient` arayüzünü görür.
 
-İstek üç katmanlıdır (Technical MVP, 6.2):
+İstek üç katmanlıdır (docs/architecture/llm.md):
   1. statik blok   – amaç başına herkes için aynı, 1 saatlik önbellek
   2. öğrenci özeti – kullanıcı başına günde bir donar, 5 dakikalık önbellek
   3. görev         – her çağrıda değişir, önbelleğe alınmaz

@@ -1,4 +1,4 @@
-"""Bekleyen geri bildirimlerin yeniden işlenmesi (Technical MVP, 7: retry_deferred_feedback).
+"""Bekleyen geri bildirimlerin yeniden işlenmesi (docs/architecture/jobs.md).
 
 "Şimdilik atladık" denen yazılar (günlük limit, API hatası, ret, doğrulayıcıdan kalma)
 saatlik işle yeniden değerlendirilir. Öğrenci hazır olanları panelde görür.

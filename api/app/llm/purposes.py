@@ -1,4 +1,4 @@
-"""Amaç (purpose) başına model ve çıktı ayarları; model bir ayardır (Technical MVP, 6.1)."""
+"""Amaç (purpose) başına model ve çıktı ayarları; model bir ayardır (docs/architecture/llm.md)."""
 
 from dataclasses import dataclass
 from typing import Literal

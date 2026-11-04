@@ -28,9 +28,19 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | Barındırma, yedek, izleme | Yok | GL-5, GL-7 | Emir |
 | PWA ve Playwright | Yok | Yap ya da belgeden çıkar kararı (EK-15) | Emir |
 
+## Açık teknik kararlar
+
+| Karar | Ölçüt | Son tarih |
+| --- | --- | --- |
+| OpenAI'ye geçiş | OA-5 karşılaştırması | Dev seti gelince |
+| TTS kesin onayı | Işıl'ın dinlemesi (OA-6) | GL-3'ten önce |
+| Barındırma | Kurulum kolaylığı, maliyet, AB, yedekleme | Alfa öncesi |
+| Proje adı ve alan adı, SPF ve DKIM | Geçici alan adıyla başlanabilir | Barındırmadan önce |
+| PWA ve Playwright | Yap ya da belgeden çıkar (EK-15) | Part 15 |
+
 ## Bu hafta
 
-Şu an: Part 5 (inceleme ekranı). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
+Şu an: Part 6 (belgeyi bölme). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
 
 ## Kod hazır, onay bekliyor
 

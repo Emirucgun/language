@@ -4,6 +4,9 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-04 | Teknik MVP belgesi `docs/architecture/` altına bölündü, bayat ve çelişen yerler koda göre düzeltildi; eski belge indeks | DK-2, DZ-12 |
+| 2026-11-04 | On ölçüm `docs/experiments/` altına taşındı | DK-5 |
+| 2026-11-04 | Geçmiş kararlar ADR-0002 ile ADR-0006 arasına yazıldı; sağlayıcı ve TTS kararları OA-5 sonrası | DK-3 |
 | 2026-11-04 | İnceleme ekranı (`/review`): `reviewer` rolü, öncelikli "sorun var" kuyruğu, rastgele örnek, dört karar; göç 0004 | GL-1 |
 | 2026-11-04 | "Sorun var" düğmesi tüm etkinlik türlerinde ve hedefli; neden sabit listeden | EK-6 |
 | 2026-11-04 | İçerik yazım kılavuzu ve inceleme yönergesi | DK-9 |

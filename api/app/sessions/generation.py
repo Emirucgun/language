@@ -1,4 +1,4 @@
-"""Bugünün oturumu: seçim kural katmanında, içerik LLM'de (Technical MVP, 3 ve 6.2).
+"""Bugünün oturumu: seçim kural katmanında, içerik LLM'de (docs/architecture/flows.md).
 
     tekrar motoru öğeleri seçer → paylaşılabilir içerik varsa yeniden kullanılır
     → kalanlar için tek Haiku çağrısı → her etkinlik ayrı doğrulanır

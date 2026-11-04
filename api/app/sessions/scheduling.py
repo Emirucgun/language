@@ -1,4 +1,4 @@
-"""Hangi kullanıcının oturumu şimdi ön üretilmeli? (Technical MVP, 7)
+"""Hangi kullanıcının oturumu şimdi ön üretilmeli? (docs/architecture/jobs.md)
 
 Kural: kullanıcının kendi saat diliminde saat 03:00'ü geçtiyse ve bugünün oturumu henüz
 hazır değilse üret. Zamanlayıcı 15 dakikada bir çalıştığı için gece kaçan bir kullanıcı

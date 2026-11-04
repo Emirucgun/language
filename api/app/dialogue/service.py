@@ -1,4 +1,4 @@
-"""Yazılı diyalog akışı (Technical MVP, 6.11).
+"""Yazılı diyalog akışı (docs/architecture/flows.md).
 
     kural katmanı senaryoyu ve hedef öğeleri seçer → sabit açılış cümlesi (LLM yok)
     → her öğrenci cümlesi: olay → tek Sonnet çağrısı (geri bildirim + partner cümlesi)
