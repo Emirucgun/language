@@ -26,12 +26,15 @@ class WeeklyReport(Base):
 
 
 class Review(Base):
-    """Işıl'ın örneklem denetimi ve "sorun var" kuyruğu (H4)."""
+    """Işıl'ın örneklem denetimi ve "sorun var" kuyruğu. H4 yalnızca `sample`dan hesaplanır."""
 
     __tablename__ = "reviews"
     __table_args__ = (
         CheckConstraint("target_type IN ('activity_content','feedback')", name="target_type"),
-        CheckConstraint("verdict IN ('ok','minor','wrong')", name="verdict"),
+        CheckConstraint(
+            "verdict IN ('correct','wrong_teaching','off_level','unclear')", name="verdict"
+        ),
+        CheckConstraint("source IN ('sample','flag')", name="source"),
         Index(None, "target_type", "target_id"),
         {"schema": LEARNING},
     )
@@ -40,7 +43,7 @@ class Review(Base):
     target_type: Mapped[str] = mapped_column(String(24))
     target_id: Mapped[int]
     reviewer: Mapped[str] = mapped_column(String(64))
-    verdict: Mapped[str] = mapped_column(String(8))
-    wrong_teaching: Mapped[bool]
+    verdict: Mapped[str] = mapped_column(String(16))
+    source: Mapped[str] = mapped_column(String(8), server_default="sample")
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = created_at_column()

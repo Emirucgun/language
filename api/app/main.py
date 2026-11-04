@@ -9,6 +9,7 @@ from app.events.router import router as events_router
 from app.feedback.router import router as feedback_router
 from app.onboarding.router import router as onboarding_router
 from app.reports.router import router as reports_router
+from app.review.router import router as review_router
 from app.sessions.router import router as practice_router
 
 app = FastAPI(title="Teacher API", version="0.1.0")
@@ -20,6 +21,7 @@ app.include_router(practice_router)
 app.include_router(dialogue_router)
 app.include_router(curriculum_router)
 app.include_router(reports_router)
+app.include_router(review_router)
 
 
 @app.get("/api/health")

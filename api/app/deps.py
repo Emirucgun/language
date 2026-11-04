@@ -92,3 +92,13 @@ def consented_user(user: CurrentUser) -> User:
 
 
 ConsentedUser = Annotated[User, Depends(consented_user)]
+
+
+def reviewer_user(user: CurrentUser) -> User:
+    """İnceleyen öğrenci akışından geçmek zorunda değil: onam istenmez."""
+    if user.role != "reviewer":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Bu ekran inceleyenler içindir.")
+    return user
+
+
+ReviewerUser = Annotated[User, Depends(reviewer_user)]

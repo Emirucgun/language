@@ -223,7 +223,7 @@ Bu liste Teknik MVP belgesine dayanıyordu. Kod okununca listede olmayan sorunla
 - DZ-7: günlük oturum zaten yerel gün sonunu kullanıyordu; kod değişmedi, test eklendi. Serbest yazma (+1 saat) ve ek çalışma (+1 gün) bilerek farklı kesim kullanır.
 - OA-3: şema alanları zaten zorunlu. Asıl sorun yarım yanıt ve ret durumunda çökmeydi: SDK `parse` `ValidationError` fırlatıyor, `llm/service.py` yakalamıyordu. Part 3'te düzeldi (`create` + `parse_output`, gerçek SDK ve gerçek API ile sınandı); token kullanımı da artık kaybolmuyor. OpenAI şema uyumu ve ret benzetimi Part 8'de, kutu o zaman işaretlenir.
 - OA-6: Realtime ile TTS mümkün, ama model 161 üretimin en az 4'ünde cümleyi okumadı; bu yüzden ses yalnızca `synthesize_checked` ile üretilir. Hız `speed` ile ayarlanır (belgede yok, çalışıyor). Sonuçlar: `docs/experiments/2026-11-04-tts-realtime.md`. Kalan: Işıl'ın dinlemesi. `speechSynthesis` yedeği ve yapay zekâ ses bildirimi dinleme arayüzüyle gelir (GL-3).
-- GL-1: `reviews` tablosu var ama `verdict` değerleri (ok, minor, wrong) dört düğmeyle uyuşmuyor; rol alanı da yok. Göç gerekir.
+- GL-1: `reviews` tablosu dört karara göre değişti, rol alanı eklendi (göç 0004). Her kayıt `source` taşır: H4 yalnızca `sample`dan hesaplanır, çünkü "sorun var" işaretli içerik rastgele örnek değildir. Kaynak sunucuda belirlenir. "Yanlış öğretiyor" denen paylaşılan içerik `retired` olur. Kalan: Işıl'ın 10 örnek incelemesi.
 
 **İşler**
 
@@ -232,7 +232,7 @@ Bu liste Teknik MVP belgesine dayanıyordu. Kod okununca listede olmayan sorunla
 - [x] **EK-3 · Yerleştirme bitmeden plan üretimi (doğrulandı).** Sorun: `sessions/scheduling.py` hedefe bakıyor, yerleştirme testine bakmıyor; test sürerken iş varsayılan A1 ile plan kurabilir ve plan yenilenmez. Kabul: yerleştirmesi bitmemiş kullanıcı seçilmiyor; test.
 - [x] **EK-4 · Hafta sayacı yeniden planda sıfırlanıyor (doğrulandı, yalnızca görünüm).** Sorun: yeniden plan yeni bir 8 hafta üretir, yani öğe sırası doğruydu; ama öğrenci her hafta "1. hafta" görüyordu. Çözüm: gösterilen hafta plan sürümü kadar kaydırılır, seçim mantığı değişmedi. Kabul: yeniden plan sonrası doğru hafta gösterilir, öğe sırası değişmez; test.
 - [x] **EK-5 · Serbest yazma müfredatı atlıyor.** Sorun: `sessions/router.py` aday öğeleri tüm havuzdan alıyor, müfredat sırasına ve günlük yeni öğe kotasına bakmıyor. Kabul: adaylar müfredattan; test.
-- [ ] **EK-6 · "Sorun var" düğmesi eksik.** Sorun: yalnızca yazmada var ve neden göndermiyor; serbest yazmada hedefi boş. Blueprint her etkinliği söylüyor. Kabul: tüm etkinlik türlerinde hedefli bayrak; GL-1 kuyruğuna düşüyor.
+- [x] **EK-6 · "Sorun var" düğmesi eksik.** Sorun: yalnızca yazmada var ve neden göndermiyor; serbest yazmada hedefi boş. Blueprint her etkinliği söylüyor. Kabul: tüm etkinlik türlerinde hedefli bayrak; GL-1 kuyruğuna düşüyor.
 - [ ] **EK-7 · Ölü `extra` amacı.** Sorun: ek çalışma `purpose="session"` ile çağrılıyor; `purposes.py`'deki `extra` ayarı kullanılmıyor, kayıtlar karışıyor. Kabul: `llm_calls`'ta `extra` görünüyor.
 - [ ] **EK-8 · Şık sayısı denetim boşlukları.** Sorun: okuma sorularında şık sayısı denetlenmiyor; şablon sorular küçük planda 1–2 şık üretebiliyor ve hiç doğrulanmıyor. Kabul: DZ-5'in 4 şık kuralı tüm yollarda geçerli; test.
 - [ ] **EK-9 · `interest_tag` taşması.** Sorun: `String(32)` sütun, ilgi alanında uzunluk sınırı yok; uzun değer oturum üretimini kırar. Kabul: DZ-10'daki liste seçimiyle kapanır; test.

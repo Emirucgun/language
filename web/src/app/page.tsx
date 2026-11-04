@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button, Card, Loading, Screen } from "@/components/ui";
 import { ApiError, api } from "@/lib/api";
-import { nextPath } from "@/lib/use-me";
+import { landingPath } from "@/lib/use-me";
 
 // Giriş noktası: kullanıcıyı durumuna göre doğru ekrana gönderir.
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
   const route = useCallback(() => {
     api
       .me()
-      .then((me) => router.replace(nextPath(me)))
+      .then((me) => router.replace(landingPath(me)))
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 401) router.replace("/login");
         else setFailed(true);

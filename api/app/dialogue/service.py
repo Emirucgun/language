@@ -156,7 +156,7 @@ class Turn:
     reply: dict[str, object]  # dialogue_replied payload'u
 
 
-def _turns(db: Session, activity_id: int) -> list[Turn]:
+def load_turns(db: Session, activity_id: int) -> list[Turn]:
     replies = db.scalars(
         select(Event.payload)
         .where(Event.activity_id == activity_id, Event.type == "dialogue_replied")
@@ -179,7 +179,7 @@ def _item_texts(db: Session, item_ids: list[int]) -> list[str]:
 
 
 def view(db: Session, dialogue: Dialogue) -> DialogueView:
-    turns = _turns(db, dialogue.activity.id)
+    turns = load_turns(db, dialogue.activity.id)
     s = dialogue.scenario
     shown: list[TurnView] = []
     for t in turns:
@@ -250,7 +250,7 @@ def reply(
 ) -> TurnView:
     user_id = dialogue.activity.user_id
     lock_user(db, user_id)
-    history = _turns(db, dialogue.activity.id)
+    history = load_turns(db, dialogue.activity.id)
     if history and history[-1].reply["done"]:
         raise DialogueFinished(dialogue.activity.id)
     turn = len(history) + 1

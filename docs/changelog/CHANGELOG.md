@@ -4,6 +4,10 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-04 | İnceleme ekranı (`/review`): `reviewer` rolü, öncelikli "sorun var" kuyruğu, rastgele örnek, dört karar; göç 0004 | GL-1 |
+| 2026-11-04 | "Sorun var" düğmesi tüm etkinlik türlerinde ve hedefli; neden sabit listeden | EK-6 |
+| 2026-11-04 | İçerik yazım kılavuzu ve inceleme yönergesi | DK-9 |
+| 2026-11-04 | Tüm betiklerde Windows çıktı kodlaması düzeltildi | GL-1 |
 | 2026-11-04 | **[MODEL]** `TTSClient` ve Realtime adaptörü (`gpt-realtime-2.1-mini`), `gpt-transcribe` ile denetimli ses üretimi, 120 örneklik deney | OA-6 |
 | 2026-11-04 | Yeni ses tanıma kuralı ayarda ve kurallarda: yalnızca `gpt-transcribe` | OA-7 |
 | 2026-11-04 | ADR-0001: OpenAI hesabı ve işleme bölgesi (önerildi) | OA-1 |

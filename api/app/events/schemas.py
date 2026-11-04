@@ -87,6 +87,8 @@ class WritingAssessed(Payload):
 
 class ActivityFlagged(Payload):
     reason: str | None = Field(default=None, max_length=500)
+    # Hedef geri bildirimdir; yoksa olayın etkinliği. Serbest yazmada etkinlik yoktur.
+    feedback_id: int | None = None
 
 
 class ExtraActivityChosen(Payload):

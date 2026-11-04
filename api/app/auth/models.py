@@ -3,16 +3,30 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, LargeBinary, SmallInteger, String, Text, Uuid, text
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    LargeBinary,
+    SmallInteger,
+    String,
+    Text,
+    Uuid,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import LEARNING, Base, created_at_column
 
+ROLES = ("learner", "reviewer")
+
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {"schema": LEARNING}
+    __table_args__ = (
+        CheckConstraint("role IN ('learner','reviewer')", name="role"),
+        {"schema": LEARNING},
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, server_default=text("uuidv7()"))
     # Silme talebinde boşaltılır; bu yüzden nullable.
@@ -25,6 +39,8 @@ class User(Base):
     is_adult_confirmed: Mapped[bool] = mapped_column(server_default="false")
     consent_version: Mapped[str | None] = mapped_column(String(16))
     consent_at: Mapped[datetime | None]
+    # reviewer: Işıl'ın inceleme ekranı. Rol yalnızca betikle verilir (scripts/set_role.py).
+    role: Mapped[str] = mapped_column(String(16), server_default="learner")
     created_at: Mapped[datetime] = created_at_column()
     deleted_at: Mapped[datetime | None]
 

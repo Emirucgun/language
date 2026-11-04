@@ -18,6 +18,8 @@ A1–A2 seviyesinde Türkçe konuşan yetişkinler için yapay zeka destekli İn
 - LLM çıktısı doğrulayıcıdan geçmeden öğrenciye gitmez. "Doğrulayıcıdan geçti" "doğru" demek değildir.
 - Hata yerini model değil sunucu bulur: model alıntılar, konumu `span_of` hesaplar.
 - İçerik kimlikleri korunur: öğe ve etiket satırı silinmez, pasifleşir; sabit test yeni sürümle değişir.
+- H4 oranı yalnızca `reviews.source = 'sample'` kayıtlarından hesaplanır; kaynak istemciden alınmaz.
+- İnceleyen öğrencinin metnini görür, kimliğini görmez.
 - Prompt dosyaları değiştirilmez: `app/llm/prompts/<amaç>/vN.md` yeni sürüm olarak eklenir, eskisi kalır.
 
 ## Yasaklar
@@ -53,6 +55,7 @@ uv run python -m scripts.seed_dev_content
 uv run python -m app.worker
 uv run python -m scripts.export_openapi ../web/openapi.json
 uv run python -m scripts.make_templates
+uv run python -m scripts.set_role e-posta reviewer
 ```
 
 Işıl'ın tabloları (`--apply` olmadan yalnızca rapor verir; akış: `docs/content/tablolar.md`):

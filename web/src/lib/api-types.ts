@@ -419,6 +419,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/review/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Next */
+        get: operations["get_next_api_review_next_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Review */
+        post: operations["post_review_api_review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -681,6 +715,8 @@ export interface components {
             placement_done: boolean;
             /** Level */
             level: string | null;
+            /** Role */
+            role: string;
         };
         /** PartnerLine */
         PartnerLine: {
@@ -755,6 +791,67 @@ export interface components {
             metrics: {
                 [key: string]: unknown;
             };
+        };
+        /** ReviewItem */
+        ReviewItem: {
+            /**
+             * Target Type
+             * @enum {string}
+             */
+            target_type: "activity_content" | "feedback";
+            /** Target Id */
+            target_id: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "sample" | "flag";
+            /** Title */
+            title: string;
+            /** Level */
+            level: string | null;
+            /** Flag Reason */
+            flag_reason: string | null;
+            /** Lines */
+            lines: components["schemas"]["ReviewLine"][];
+        };
+        /** ReviewLine */
+        ReviewLine: {
+            /** Label */
+            label: string;
+            /** Text */
+            text: string;
+        };
+        /** ReviewQueueView */
+        ReviewQueueView: {
+            item: components["schemas"]["ReviewItem"] | null;
+            stats: components["schemas"]["ReviewStats"];
+        };
+        /** ReviewRequest */
+        ReviewRequest: {
+            /**
+             * Target Type
+             * @enum {string}
+             */
+            target_type: "activity_content" | "feedback";
+            /** Target Id */
+            target_id: number;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "correct" | "wrong_teaching" | "off_level" | "unclear";
+            /** Notes */
+            notes?: string | null;
+        };
+        /** ReviewStats */
+        ReviewStats: {
+            /** Sample Reviewed */
+            sample_reviewed: number;
+            /** Sample Wrong Teaching */
+            sample_wrong_teaching: number;
+            /** Flags Pending */
+            flags_pending: number;
         };
         /** RewriteRequest */
         RewriteRequest: {
@@ -1624,6 +1721,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReportView"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_next_api_review_next_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewQueueView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_review_api_review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -26,6 +26,7 @@ from app.llm.client import AnthropicClient  # noqa: E402
 from app.llm.models import LlmCall  # noqa: E402
 from app.validator.core import Lexicon, words  # noqa: E402
 from scripts.dev_content import ERROR_TAGS  # noqa: E402
+from scripts.sheets import utf8_output  # noqa: E402
 
 # (görev, hedef öğe, öğrencinin cümlesi)
 SAMPLES = [
@@ -50,6 +51,7 @@ BASE_WORDS = (
 
 
 def main() -> int:
+    utf8_output()
     key = settings.anthropic_api_key
     if key is None or not key.get_secret_value():
         print("ANTHROPIC_API_KEY api/.env içinde tanımlı değil.")
