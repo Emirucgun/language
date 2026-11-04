@@ -5,6 +5,8 @@
 - `MVP Roadmap ve Blueprint – A1–A2 AI İngilizce Özel Öğretmen.md`: ne ve neden
 - `Technical MVP – A1–A2 AI İngilizce Özel Öğretmen.md`: nasıl
 
+Teknik belgeler, durum tablosu ve kararlar: [docs/](docs/README.md). Yapay zeka aracı kuralları: [AGENTS.md](AGENTS.md).
+
 ## Yapı
 
 | Klasör | İçerik |
