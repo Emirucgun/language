@@ -7,6 +7,10 @@ Create Date: 2026-11-04 17:00:00
 Inceleme ekranı için kullanıcı rolü ve dört kararlı `reviews`. `wrong_teaching` sütunu kalkar:
 karar artık kendisi söylüyor. `source` H4 için gerekli: "sorun var" işaretli içerik rastgele
 örneklem değildir, oran yalnızca `sample` kayıtlarından hesaplanır.
+
+Dikkat: geri alma kayıplıdır. `source` ve `role` sütunları silinir; yeniden uygulanınca tüm
+incelemeler `sample`, tüm kullanıcılar `learner` olur. Üretimde geri alma H4 oranını bozar ve
+inceleyen rollerini siler; önce yedek alın, sonra `scripts.set_role` ile rolleri geri verin.
 """
 
 from collections.abc import Sequence
