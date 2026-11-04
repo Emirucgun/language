@@ -17,6 +17,7 @@ A1–A2 seviyesinde Türkçe konuşan yetişkinler için yapay zeka destekli İn
 - Kişisel veri prompt'a girmez. Tüm LLM çağrıları `app/llm/service.py` üzerinden geçer: limit, koruma ve `llm_calls` kaydı oradadır. Sağlayıcı SDK'sını başka yerden çağırma.
 - LLM çıktısı doğrulayıcıdan geçmeden öğrenciye gitmez. "Doğrulayıcıdan geçti" "doğru" demek değildir.
 - Hata yerini model değil sunucu bulur: model alıntılar, konumu `span_of` hesaplar.
+- İçerik kimlikleri korunur: öğe ve etiket satırı silinmez, pasifleşir; sabit test yeni sürümle değişir.
 - Prompt dosyaları değiştirilmez: `app/llm/prompts/<amaç>/vN.md` yeni sürüm olarak eklenir, eskisi kalır.
 
 ## Yasaklar
@@ -50,6 +51,16 @@ uv run alembic upgrade head
 uv run python -m scripts.seed_dev_content
 uv run python -m app.worker
 uv run python -m scripts.export_openapi ../web/openapi.json
+uv run python -m scripts.make_templates
+```
+
+Işıl'ın tabloları (`--apply` olmadan yalnızca rapor verir; akış: `docs/content/tablolar.md`):
+
+```bash
+uv run python -m scripts.import_items dosya.xlsx
+uv run python -m scripts.import_error_tags dosya.xlsx
+uv run python -m scripts.import_placement dosya.xlsx
+uv run python -m scripts.import_golden dosya.xlsx
 ```
 
 `web/` içinde:

@@ -19,8 +19,8 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | Yazılı diyalog | Kısmi | Düzeltmeler gösterilmiyor (EK-11) | Emir |
 | Haftalık rapor ve yeniden plan | Kısmi | EK-4 | Emir |
 | Dinleme ve TTS | Yok | OA-6, GL-3 | Emir, Işıl |
-| Öğe havuzu | Yok | Yalnızca yaklaşık 10 geliştirme öğesi var; içe aktarıcı yok (GL-1, GL-2) | Işıl, Emir |
-| Altın set ve `eval.golden` | Yok | DZ-1, DZ-2; set Işıl'dan | Işıl, Emir |
+| Öğe havuzu | Kısmi | İçe aktarıcı hazır; yalnızca yaklaşık 10 geliştirme öğesi var, içerik Işıl'dan | Işıl |
+| Altın set ve `eval.golden` | Kısmi | İçe aktarıcı hazır; `eval.golden` yok (DZ-1, DZ-2), set Işıl'dan | Işıl, Emir |
 | İnceleme ekranı | Yok | GL-1 | Emir |
 | Hatırlama, ön ve son test | Yok | DZ-3, DZ-4 | Emir, Işıl |
 | OpenAI geçişi | Yok | OA-1 anahtar; OA-5 dev seti | Emir |
@@ -30,7 +30,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 
 ## Bu hafta
 
-Şu an: Part 1 (Temel). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
+Şu an: Part 2 (Işıl'ın veri hattı). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
 
 ## Kod hazır, onay bekliyor
 
@@ -38,3 +38,4 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | --- | --- |
 | EK-1 | GitHub'da ilk koşunun yeşil olması (push gerekir) |
 | DK-8 | Aracın yeni bir işe `AGENTS.md`'den başladığı deneme |
+| GL-2 | Şablonların Sheets'e yüklenip Işıl'la paylaşılması (Emir) |

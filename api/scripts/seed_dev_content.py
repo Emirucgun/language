@@ -15,11 +15,13 @@ from sqlalchemy import create_engine, text
 from app.onboarding.placement import FixedQuestion
 from scripts.dev_content import ERROR_TAGS, ITEMS
 from scripts.placement_v1 import QUESTIONS as PLACEMENT_V1
+from scripts.sheets import utf8_output
 
 load_dotenv()
 
 
 def main() -> None:
+    utf8_output()
     engine = create_engine(os.environ["MIGRATIONS_DATABASE_URL"])
     with engine.begin() as conn:
         for code, name, explanation in ERROR_TAGS:
