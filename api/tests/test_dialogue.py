@@ -52,7 +52,9 @@ class Partner:
     def complete(self, request: LLMRequest) -> LLMResult:
         self.tasks.append(request.task)
         parsed = self.turns[min(len(self.tasks), len(self.turns)) - 1]
-        return LLMResult(request.config.model, parsed, Usage(400, 150), "end_turn", 2000, None)
+        return LLMResult(
+            request.config.model, parsed, Usage(400, 150), "end_turn", 2000, None
+        )
 
 
 @pytest.fixture
