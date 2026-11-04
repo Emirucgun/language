@@ -32,7 +32,7 @@ from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
 from app.reports.service import WeeklyMetrics
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"  # v2: Türkçe metinde İngilizce dilbilgisi terimi yok; "bu hafta" dili
 
 
 def _new_per_day(daily_minutes: int | None) -> int:
@@ -77,7 +77,7 @@ def _progress_lines(progress: WeeklyMetrics) -> list[str]:
     error = progress.top_error.code if progress.top_error else "none"
     success = "n/a" if progress.success_rate is None else progress.success_rate
     return [
-        "This is the WEEKLY REPLAN. Last week's progress:",
+        "WEEKLY REPLAN. Progress in the week that is ending now (call it 'bu hafta'):",
         f"- active days: {progress.active_days}, sessions completed: {progress.sessions_completed}",
         f"- new items met: {progress.new_items}, consolidated items: {progress.consolidated_items}",
         f"- review success rate: {success}",

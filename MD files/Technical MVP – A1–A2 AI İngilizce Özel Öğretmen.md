@@ -281,7 +281,7 @@ Ekranlar: `/login` (e-posta + davet kodu), `/auth/verify`, `/onboarding/consent`
 - **Yeniden planlama (`weekly.py`):** hafta aktifse müfredat ajanı ilerleme özetiyle yeniden çalışır: derecelendirilmiş olayı olan öğeler havuzdan çıkar, kapasite tempoya göre ayarlanır, `summary_tr` değişikliği ve nedenini söyler (blueprint: "değişiklik nedeniyle birlikte gösterilir"). Hiç gelmeyen kullanıcıya LLM çağrısı yapılmaz; rapor yine yazılır, plan aynı kalır.
 - **İş:** `schedule_weekly_reviews` saatte bir; yerel pazar 20:00 sonrası, raporu olmayan kullanıcılar için kullanıcı + hafta başına tek `weekly_review` işi.
 - **Ekran:** `/report` (tarih aralığı, dört gösterge, beceri dağılımı, en sık hata, plan değişikliği); panelde rapor varsa bağlantı. `GET /api/reports/latest`.
-- **İlk gerçek çalışma (4 Kas 2026):** 8,2 sn, tek Sonnet çağrısı; değişiklik açıklaması somut ve hatalara dayalı. İki ifade sorunu prompt v2'de düzeltilmeli: rapor pazar günü aynı hafta için üretildiği hâlde "geçen hafta" dedi; "artikel" yerine İngilizce "article" kullandı.
+- **İlk gerçek çalışma (4 Kas 2026):** 8,2 sn, tek Sonnet çağrısı; değişiklik açıklaması somut ve hatalara dayalı. İki ifade sorunu vardı: rapor pazar günü aynı hafta için üretildiği hâlde "geçen hafta" dedi; "artikel" yerine İngilizce "article" kullandı. **Düzeltildi (müfredat prompt v2):** Türkçe metinde İngilizce dilbilgisi terimi yasak (kural katmanı da `english_jargon` ile reddeder), yeniden planlamada "bu hafta" dili ve ilk cümlede değişikliğin sayıya dayalı nedeni. Aynı kullanıcı/hafta için yeniden denendi: "Bu hafta tekrar başarın 0,57 olduğu için planı yavaşlattım ve artikel (a/an/the) çalışmasını artırdım." İlk denemede kurallardan geçti (15 sn, ~$0.03).
 
 ## 6.9 Bekleyen geri bildirim (uygulandı)
 

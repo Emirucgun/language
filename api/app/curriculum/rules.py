@@ -4,6 +4,7 @@ Reddedilen öneri bir kez yeniden istenir (hatalar ajana geri verilir); yine ge�
 deterministik yedek plan kullanılır. Öğrenci her durumda bir plan görür.
 """
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -14,6 +15,21 @@ WEEKS = 8
 STUDY_DAYS_PER_WEEK = 6
 MAX_FOCUS_CHARS = 60
 MAX_CAN_DO = 3
+
+# Türkçe metinlerde İngilizce dilbilgisi terimi olmasın (öğrenci "artikel" bilir, "article"
+# değil). Tırnak içindeki İngilizce öğe metinleri bu kalıplara takılmaz.
+ENGLISH_JARGON = re.compile(
+    r"\b(articles?|tenses?|present simple|simple present|past simple|simple past|"
+    r"present continuous|plurals?|prepositions?|verbs?|nouns?|adjectives?|subjects?)\b",
+    re.IGNORECASE,
+)
+
+
+def _jargon(texts: Sequence[str]) -> list[str]:
+    found: list[str] = []
+    for text in texts:
+        found += [m.group(0).lower() for m in ENGLISH_JARGON.finditer(text)]
+    return sorted(set(found))
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +89,11 @@ def validate(
             result.add("missing_focus", f"hafta {w.week}")
         if not w.can_do_tr:
             result.add("missing_can_do", f"hafta {w.week}")
+    jargon = _jargon(
+        [draft.summary_tr, *(w.focus_tr for w in weeks), *(c for w in weeks for c in w.can_do_tr)]
+    )
+    if jargon:
+        result.add("english_jargon", f"Türkçe metinde İngilizce terim: {', '.join(jargon)}")
     # Havuz yettiği sürece boş hafta olmasın.
     if len(seen) < min(len(pool_ids), capacity * WEEKS) * 0.8:
         result.add("low_coverage", f"{len(seen)} öğe planlandı, havuz {len(pool_ids)}")

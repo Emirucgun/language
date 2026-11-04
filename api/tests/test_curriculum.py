@@ -72,6 +72,18 @@ def test_rule_violations_are_rejected(weeks: list[list[int]], code: str) -> None
     assert code in {i.code for i in result.issues}
 
 
+def test_english_grammar_jargon_in_turkish_text_is_rejected() -> None:
+    draft = _draft(_even([p.id for p in POOL]))
+    draft.summary_tr = "Yazma ve article hatalarına daha çok yer verdim."
+    result, _ = validate(draft, POOL, capacity=6)
+    assert [i.code for i in result.issues] == ["english_jargon"]
+    assert "article" in result.issues[0].detail
+
+    draft.summary_tr = "Artikel hatalarına ve “every day” kalıbına daha çok yer verdim."
+    result, _ = validate(draft, POOL, capacity=6)
+    assert result.ok
+
+
 def test_fallback_always_satisfies_the_rules() -> None:
     weights = default_weights("daily_conversation", ["listening"])
     assert abs(sum(weights.model_dump().values()) - 1) < 0.02
