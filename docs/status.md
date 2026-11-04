@@ -18,19 +18,19 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | Ek çalışma | Hazır | EK-7 | Emir |
 | Yazılı diyalog | Kısmi | Düzeltmeler gösterilmiyor (EK-11) | Emir |
 | Haftalık rapor ve yeniden plan | Hazır | | Emir |
-| Dinleme ve TTS | Yok | OA-6, GL-3 | Emir, Işıl |
+| Dinleme ve TTS | Kısmi | Sunucu tarafı hazır, Işıl'ın dinlemesi bekleniyor (OA-6); arayüz yok (GL-3) | Işıl, Emir |
 | Öğe havuzu | Kısmi | İçe aktarıcı hazır; yalnızca yaklaşık 10 geliştirme öğesi var, içerik Işıl'dan | Işıl |
 | Altın set ve `eval.golden` | Kısmi | İçe aktarıcı hazır; `eval.golden` yok (DZ-1, DZ-2), set Işıl'dan | Işıl, Emir |
 | İnceleme ekranı | Yok | GL-1 | Emir |
 | Hatırlama, ön ve son test | Yok | DZ-3, DZ-4 | Emir, Işıl |
-| OpenAI geçişi | Yok | OA-1 anahtar; OA-5 dev seti | Emir |
+| OpenAI geçişi | Kısmi | Anahtar var; metin adaptörü yok (OA-2); OA-5 dev seti | Emir |
 | CI | Kısmi | İlk koşu push sonrası görülecek (EK-1) | Emir |
 | Barındırma, yedek, izleme | Yok | GL-5, GL-7 | Emir |
 | PWA ve Playwright | Yok | Yap ya da belgeden çıkar kararı (EK-15) | Emir |
 
 ## Bu hafta
 
-Şu an: Part 3 (sağlamlık ve küçük kurallar). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
+Şu an: Part 4 (TTS denemesi). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
 
 ## Kod hazır, onay bekliyor
 
@@ -39,3 +39,5 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | EK-1 | GitHub'da ilk koşunun yeşil olması (push gerekir) |
 | DK-8 | Aracın yeni bir işe `AGENTS.md`'den başladığı deneme |
 | GL-2 | Şablonların Sheets'e yüklenip Işıl'la paylaşılması (Emir) |
+| OA-1 | Harcama limiti teyidi ve satışa soru (Emir); ADR-0001 kabulü |
+| OA-6 | Işıl'ın 20 ses örneğini dinleyip onaylaması ve hız seçimi |

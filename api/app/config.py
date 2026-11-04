@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     llm_model_curriculum: str = "claude-sonnet-5-5"
     llm_daily_call_limit_per_user: int = 20
 
+    # Ses. Yeni ses tanıma kodu yalnızca gpt-transcribe kullanır (OA-7).
+    openai_api_key: SecretStr | None = None
+    tts_model: str = "gpt-realtime-2.1-mini"
+    tts_voice: str = "marin"
+    tts_speed: float = 0.8  # A1 için yavaş ve net; kesin değer Işıl'ın dinlemesinden sonra
+    transcribe_model: str = "gpt-transcribe"
+
     # Giriş (Technical MVP, Bölüm 5)
     app_origin: str = "http://localhost:3000"  # magic link bu adrese gider
     login_token_ttl_minutes: int = 15

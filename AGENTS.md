@@ -26,6 +26,7 @@ A1–A2 seviyesinde Türkçe konuşan yetişkinler için yapay zeka destekli İn
 - Model adını ve fiyatını koda sabitleme; ayarda durur.
 - Hook atlama (`--no-verify`) ve test silerek ya da atlayarak yeşile geçme.
 - `content/sources/` altındaki lisanslı dosyaları depoya ekleme.
+- Sesi `TTSClient.synthesize` ile doğrudan kullanma: model cümleyi okumayabilir, `synthesize_checked` kullan. Dinleme cümlelerinde sayıları yazıyla yaz; kapı rakamları göremez.
 - Yeni ses tanıma kodunda `gpt-transcribe` dışında model kullanma; konuşma MVP kapsamı dışındadır.
 
 ## Her değişiklikte

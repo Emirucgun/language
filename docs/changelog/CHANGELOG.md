@@ -4,6 +4,9 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-04 | **[MODEL]** `TTSClient` ve Realtime adaptörü (`gpt-realtime-2.1-mini`), `gpt-transcribe` ile denetimli ses üretimi, 120 örneklik deney | OA-6 |
+| 2026-11-04 | Yeni ses tanıma kuralı ayarda ve kurallarda: yalnızca `gpt-transcribe` | OA-7 |
+| 2026-11-04 | ADR-0001: OpenAI hesabı ve işleme bölgesi (önerildi) | OA-1 |
 | 2026-11-04 | Yarım yanıt ve ret artık çökmüyor: adaptör `create` ile çağırıp kendisi doğrular, başarısız çağrının maliyeti de kaydedilir | OA-3 |
 | 2026-11-04 | E-posta içeren metin ve ilgi alanı istekte reddedilir, hiçbir şey saklanmaz; LLM kapısı artık istisna fırlatmaz | EK-2 |
 | 2026-11-04 | Yerleştirme testi bitmeden gece üretimi yapılmaz | EK-3 |
