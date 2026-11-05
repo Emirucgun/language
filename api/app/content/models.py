@@ -70,17 +70,23 @@ class ErrorTag(Base):
 
 
 class FixedTest(Base):
-    """Ölçüm testleri (H1, H3) canlı üretilmez: sabit, sürümlü, onaylı."""
+    """Seviye ölçen sabit test (H3): sürümlü, onaylı, iki paralel form.
+
+    Ön mü son mu olduğu kişiye bağlıdır: yarısı A ile başlar, yarısı B ile. Hatırlama testi
+    (H1) burada değildir; kişiye özel kurulur (`app/assessment/retention.py`).
+    """
 
     __tablename__ = "fixed_tests"
     __table_args__ = (
-        CheckConstraint("purpose IN ('placement','pre','post','retention')", name="purpose"),
-        Index(None, "purpose", "version", unique=True),
+        CheckConstraint("purpose = 'placement'", name="purpose"),
+        CheckConstraint("form IN ('A','B')", name="form"),
+        Index(None, "purpose", "form", "version", unique=True),
         {"schema": CONTENT},
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     purpose: Mapped[str] = mapped_column(String(16))
+    form: Mapped[str] = mapped_column(String(1), server_default="A")
     version: Mapped[int]
     questions: Mapped[list[Any]] = mapped_column(JSONB)
     approved_by: Mapped[str | None] = mapped_column(String(64))

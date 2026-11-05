@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app import models  # noqa: F401 - tüm tabloları kaydeder; ilişkiler (FK) çözülebilsin
+from app.assessment.router import router as tests_router
 from app.auth.router import router as auth_router
 from app.config import settings
 from app.curriculum.router import router as curriculum_router
@@ -22,6 +23,7 @@ app.include_router(dialogue_router)
 app.include_router(curriculum_router)
 app.include_router(reports_router)
 app.include_router(review_router)
+app.include_router(tests_router)
 
 
 @app.get("/api/health")

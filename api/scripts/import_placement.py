@@ -1,7 +1,8 @@
-"""Yerleştirme testi inceleme listesini içe aktarır: Onay / Değiştir / Çıkar.
+"""Seviye testi inceleme listesini içe aktarır: Onay / Değiştir / Çıkar.
 
     cd api
     uv run python -m scripts.import_placement dosya.xlsx
+    uv run python -m scripts.import_placement dosya.xlsx --form B
     uv run python -m scripts.import_placement dosya.xlsx --apply --reviewer "Işıl"
 
 Hepsi Onay ise mevcut sürüm onaylanır. Değişiklik varsa yeni sürüm açılır; eski sürüm
@@ -12,7 +13,7 @@ import argparse
 import hashlib
 import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -69,6 +70,11 @@ SPEC = Spec(
         ),
         Column("note", "Not", "Emir'e not (içe aktarılmaz).", width=34),
     ),
+)
+
+
+SPEC_B = replace(
+    SPEC, title="Seviye testi B formu incelemesi", file_name="yerlestirme-inceleme-b.xlsx"
 )
 
 
@@ -167,35 +173,39 @@ def plan_placement(rows: list[Row], base: list[FixedQuestion], report: Report) -
     return PlacementPlan(questions, changed, removed)
 
 
-def latest_version(conn: Connection) -> tuple[int, list[FixedQuestion]] | None:
+def latest_version(conn: Connection, form: str = "A") -> tuple[int, list[FixedQuestion]] | None:
     row = conn.execute(
         text(
             "SELECT version, questions FROM content.fixed_tests "
-            "WHERE purpose = 'placement' ORDER BY version DESC LIMIT 1"
-        )
+            "WHERE purpose = 'placement' AND form = :f ORDER BY version DESC LIMIT 1"
+        ),
+        {"f": form},
     ).first()
     if row is None:
         return None
     return row.version, [FixedQuestion.model_validate(q) for q in row.questions]
 
 
-def apply_placement(conn: Connection, plan: PlacementPlan, version: int, reviewer: str) -> int:
+def apply_placement(
+    conn: Connection, plan: PlacementPlan, version: int, reviewer: str, form: str = "A"
+) -> int:
     """Onaylı sürümü döndürür; commit çağırana aittir."""
     if not plan.changed:
         conn.execute(
             text(
                 "UPDATE content.fixed_tests SET approved_by = :r, approved_at = now() "
-                "WHERE purpose = 'placement' AND version = :v"
+                "WHERE purpose = 'placement' AND form = :f AND version = :v"
             ),
-            {"r": reviewer, "v": version},
+            {"r": reviewer, "f": form, "v": version},
         )
         return version
     conn.execute(
         text(
-            "INSERT INTO content.fixed_tests (purpose, version, questions, approved_by, "
-            "approved_at) VALUES ('placement', :v, CAST(:q AS jsonb), :r, now())"
+            "INSERT INTO content.fixed_tests (purpose, form, version, questions, approved_by, "
+            "approved_at) VALUES ('placement', :f, :v, CAST(:q AS jsonb), :r, now())"
         ),
         {
+            "f": form,
             "v": version + 1,
             "q": json.dumps([q.model_dump() for q in plan.questions], ensure_ascii=False),
             "r": reviewer,
@@ -208,6 +218,7 @@ def main() -> None:
     utf8_output()
     parser = argparse.ArgumentParser(description="Yerleştirme incelemesini içe aktarır.")
     parser.add_argument("path", type=Path)
+    parser.add_argument("--form", choices=("A", "B"), default="A", help="hangi form")
     parser.add_argument("--apply", action="store_true", help="veritabanına yazar")
     parser.add_argument("--reviewer", help="onaylayan kişi (--apply ile zorunlu)")
     args = parser.parse_args()
@@ -216,12 +227,13 @@ def main() -> None:
 
     engine = owner_engine()
     with engine.connect() as conn:
-        base = latest_version(conn)
+        base = latest_version(conn, args.form)
         if base is None:
             sys.exit("Yerleştirme testi yok; önce: uv run python -m scripts.seed_dev_content")
         version, questions = base
         report = Report()
-        plan = plan_placement(read_sheet(args.path, SPEC, report), questions, report)
+        spec = SPEC_B if args.form == "B" else SPEC
+        plan = plan_placement(read_sheet(args.path, spec, report), questions, report)
         report.print()
         if not report.ok:
             sys.exit(1)
@@ -230,7 +242,7 @@ def main() -> None:
             target = version + 1 if plan.changed else version
             print(f"Deneme (yazılmadı): sürüm {target} onaylanacak.")
             return
-        approved = apply_placement(conn, plan, version, args.reviewer)
+        approved = apply_placement(conn, plan, version, args.reviewer, args.form)
         conn.commit()
     engine.dispose()
     print(f"Yazıldı: sürüm {approved} onaylandı.")

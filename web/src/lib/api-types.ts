@@ -453,6 +453,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tests/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tests Due */
+        get: operations["tests_due_api_tests_due_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tests/retention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Retention */
+        get: operations["get_retention_api_tests_retention_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tests/retention/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Retention Answer */
+        post: operations["post_retention_answer_api_tests_retention_answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tests/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Post */
+        get: operations["get_post_api_tests_post_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tests/post/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Post Answer */
+        post: operations["post_post_answer_api_tests_post_answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tests/post/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Post */
+        post: operations["complete_post_api_tests_post_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -759,6 +861,21 @@ export interface components {
             answered: string[];
             result: components["schemas"]["PlacementResult"] | null;
         };
+        /** PostResult */
+        PostResult: {
+            /** Score */
+            score: number;
+            /** Pre Score */
+            pre_score: number;
+        };
+        /** PostView */
+        PostView: {
+            /** Questions */
+            questions: components["schemas"]["FixedQuestionView"][];
+            /** Answered */
+            answered: string[];
+            result: components["schemas"]["PostResult"] | null;
+        };
         /** ReadyFeedbackView */
         ReadyFeedbackView: {
             /** Learner Text */
@@ -791,6 +908,39 @@ export interface components {
             metrics: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * RetentionQuestionView
+         * @description Öğrenciye giden hali: cevap ve soru grubu yok.
+         */
+        RetentionQuestionView: {
+            /** Id */
+            id: string;
+            /** Sentence En */
+            sentence_en: string;
+            /** Sentence Tr */
+            sentence_tr: string;
+            /** Options */
+            options: string[];
+        };
+        /**
+         * RetentionResult
+         * @description Yalnızca çalışılmış öğeler: kontrol soruları öğrencinin notu değildir.
+         */
+        RetentionResult: {
+            /** Done */
+            done: boolean;
+            /** Correct */
+            correct?: number | null;
+            /** Total */
+            total?: number | null;
+        };
+        /** RetentionView */
+        RetentionView: {
+            /** Questions */
+            questions: components["schemas"]["RetentionQuestionView"][];
+            /** Answered */
+            answered: string[];
         };
         /** ReviewItem */
         ReviewItem: {
@@ -899,6 +1049,22 @@ export interface components {
             listening: number;
             /** Writing */
             writing: number;
+        };
+        /** TestAnswer */
+        TestAnswer: {
+            /** Question Id */
+            question_id: string;
+            /** Answer */
+            answer: string;
+            /** Duration Ms */
+            duration_ms?: number | null;
+        };
+        /** TestsDue */
+        TestsDue: {
+            /** Retention */
+            retention: boolean;
+            /** Post */
+            post: boolean;
         };
         /** TurnView */
         TurnView: {
@@ -1781,6 +1947,198 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tests_due_api_tests_due_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestsDue"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_retention_api_tests_retention_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_retention_answer_api_tests_retention_answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetentionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_post_api_tests_post_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_post_answer_api_tests_post_answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestAnswer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_post_api_tests_post_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostResult"];
+                };
             };
             /** @description Validation Error */
             422: {

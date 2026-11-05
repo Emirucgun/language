@@ -13,6 +13,7 @@ A1–A2 seviyesinde Türkçe konuşan yetişkinler için yapay zeka destekli İn
 
 - `learning.events` yalnızca eklenir: güncelleme ve silme yok. Uygulama rolünün bu yetkisi de yoktur.
 - LLM türev tablolara yazmaz. Durum olaylardan türetilir.
+- Ölçüm testleri (`app/assessment/`, seviye testi) derece üretmez, tekrar motorunu etkilemez, doğru cevabı göstermez.
 - Öğe seçimi yalnızca `api/app/scheduler/` içinde yapılır; LLM hangi öğenin çalışılacağına karar vermez.
 - Kişisel veri prompt'a girmez. Tüm LLM çağrıları `app/llm/service.py` üzerinden geçer: limit, koruma ve `llm_calls` kaydı oradadır. Sağlayıcı SDK'sını başka yerden çağırma.
 - LLM çıktısı doğrulayıcıdan geçmeden öğrenciye gitmez. "Doğrulayıcıdan geçti" "doğru" demek değildir.
@@ -57,6 +58,7 @@ uv run python -m scripts.export_openapi ../web/openapi.json
 uv run python -m scripts.make_templates
 uv run python -m scripts.set_role e-posta reviewer
 uv run python -m eval.golden --purpose feedback
+uv run python -m analysis.hypotheses
 ```
 
 Işıl'ın tabloları (`--apply` olmadan yalnızca rapor verir; akış: `docs/content/tablolar.md`):
@@ -64,7 +66,7 @@ Işıl'ın tabloları (`--apply` olmadan yalnızca rapor verir; akış: `docs/co
 ```bash
 uv run python -m scripts.import_items dosya.xlsx
 uv run python -m scripts.import_error_tags dosya.xlsx
-uv run python -m scripts.import_placement dosya.xlsx
+uv run python -m scripts.import_placement dosya.xlsx --form A
 uv run python -m scripts.import_golden dosya.xlsx
 ```
 

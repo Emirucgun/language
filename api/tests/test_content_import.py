@@ -18,7 +18,12 @@ from scripts.import_golden import auto_split, parse_golden, read_previous, write
 from scripts.import_items import SPEC as ITEM_SPEC
 from scripts.import_items import apply_items, auto_forms, parse_items
 from scripts.import_placement import SPEC as PLACEMENT_SPEC
-from scripts.import_placement import apply_placement, plan_placement, question_row
+from scripts.import_placement import (
+    apply_placement,
+    latest_version,
+    plan_placement,
+    question_row,
+)
 from scripts.placement_v1 import QUESTIONS
 from scripts.sheets import Report, Row, Spec, read_sheet, write_template
 from tests.conftest import migrated_db  # noqa: F401
@@ -93,6 +98,19 @@ def test_item_fields_are_parsed(tmp_path: Path) -> None:
     assert item.forms == ["goes", "went"]
     assert item.topics == ["iş", "günlük"]
     assert item.reference_sentences == [{"en": "She goes to work.", "tr": "O işe gider."}]
+
+
+def test_item_without_base_form_in_examples_is_warned(tmp_path: Path) -> None:
+    """Hatırlama testi boşluğa yalın hâli koyar; "She goes" ile öğe teste giremez."""
+    report = Report()
+    inflected = _item(s1_en="She goes to work.", s1_tr="O işe gider.", forms="goes")
+    parse_items(_rows(tmp_path, ITEM_SPEC, [inflected], report), report)
+    assert report.ok and any("yalın" in w for w in map(str, report.warnings))
+
+    report = Report()
+    plain = _item(s1_en="I go to work.", s1_tr="İşe giderim.", forms="goes")
+    parse_items(_rows(tmp_path, ITEM_SPEC, [plain], report), report)
+    assert not any("yalın" in w for w in map(str, report.warnings))
 
 
 @pytest.mark.parametrize(
@@ -330,6 +348,26 @@ def test_approval_updates_or_adds_a_version(tmp_path: Path, conn: Connection) ->
         )
     ).all()
     assert [tuple(r) for r in rows] == [(1, 24, "Işıl"), (2, 23, "Işıl")]
+
+
+def test_forms_are_versioned_separately(tmp_path: Path, conn: Connection) -> None:
+    conn.execute(text("DELETE FROM content.fixed_tests WHERE purpose = 'placement'"))
+    for form in ("A", "B"):
+        conn.execute(
+            text(
+                "INSERT INTO content.fixed_tests (purpose, form, version, questions) "
+                "VALUES ('placement', :f, 1, CAST(:q AS jsonb))"
+            ),
+            {"f": form, "q": json.dumps([q.model_dump() for q in BANK], ensure_ascii=False)},
+        )
+    _, edited = _plan(tmp_path, _review(**{BANK[0].id: "Çıkar"}))
+    assert apply_placement(conn, edited, 1, "Işıl", "B") == 2  # type: ignore[arg-type]
+
+    latest = latest_version(conn, "A")
+    assert latest is not None and latest[0] == 1
+    latest = latest_version(conn, "B")
+    assert latest is not None and latest[0] == 2 and len(latest[1]) == 23
+    conn.execute(text("DELETE FROM content.fixed_tests WHERE form = 'B'"))
 
 
 # --- Altın set ---

@@ -71,7 +71,7 @@ SPEC = Spec(
             "Çekimli biçimler",
             "Virgülle. Boşsa otomatik üretilir; düzensiz kalıplarda elle yazın.",
         ),
-        Column("s1_en", "Örnek 1 (İngilizce)", "Öğenin geçtiği A1–A2 cümle.", width=34),
+        Column("s1_en", "Örnek 1 (İngilizce)", "Öğe yalın hâliyle geçsin.", width=34),
         Column("s1_tr", "Örnek 1 (Türkçe)", "Cümlenin çevirisi.", width=34),
         Column("s2_en", "Örnek 2 (İngilizce)", "İkinci cümle (isteğe bağlı).", width=34),
         Column("s2_tr", "Örnek 2 (Türkçe)", "Çevirisi.", width=34),
@@ -164,6 +164,16 @@ def parse_items(rows: list[Row], report: Report) -> list[ParsedItem]:
     without = sum(1 for i in items if not i.reference_sentences)
     if without:
         report.warn(None, f"{without} öğede örnek cümle yok (hatırlama testi bunlara dayanır)")
+    for item in items:
+        if (
+            item.kind != "structure"
+            and item.reference_sentences
+            and not any(contains_term(s["en"], [item.text_en]) for s in item.reference_sentences)
+        ):
+            report.warn(
+                item.row,
+                f"'{item.text_en}' örneklerde yalın hâliyle geçmiyor; hatırlama testine giremez",
+            )
     return items
 
 

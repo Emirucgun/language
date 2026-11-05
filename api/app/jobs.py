@@ -12,6 +12,8 @@ from procrastinate import App, PsycopgConnector, RetryStrategy
 from procrastinate.exceptions import AlreadyEnqueued
 
 from app import models  # noqa: F401 - tüm tabloları kaydeder
+from app.assessment.retention import create_test
+from app.assessment.scheduling import users_needing_retention_test
 from app.auth.models import User
 from app.config import settings
 from app.db import SessionLocal
@@ -112,6 +114,36 @@ def retry_feedback(writing_event_id: int) -> str:
         view = retry_writing(db, get_llm_client(), writing_event_id)
         db.commit()
         return "skipped" if view is None else view.status
+
+
+def _due_retention_tests() -> list[uuid.UUID]:
+    with SessionLocal() as db:
+        return users_needing_retention_test(db)
+
+
+@app.periodic(cron="40 * * * *", periodic_id="schedule_retention_tests")
+@app.task(name="schedule_retention_tests", queueing_lock="schedule_retention_tests")
+async def schedule_retention_tests(timestamp: int) -> int:
+    """Saatte bir: 14 günü dolan öğesi olan kullanıcılar için hatırlama testi işi."""
+    queued = 0
+    for user_id in await asyncio.to_thread(_due_retention_tests):
+        try:
+            await retention_test_due.configure(queueing_lock=f"retention:{user_id}").defer_async(
+                user_id=str(user_id)
+            )
+            queued += 1
+        except AlreadyEnqueued:
+            pass
+    return queued
+
+
+@app.task(name="retention_test_due", retry=RetryStrategy(max_attempts=3, wait=300))
+def retention_test_due(user_id: str) -> str | None:
+    """LLM'siz. Yeterli öğe yoksa test açılmaz; sonraki tur yeniden bakar."""
+    with SessionLocal() as db:
+        test_id = create_test(db, uuid.UUID(user_id))
+        db.commit()
+        return test_id
 
 
 @app.task(name="generate_session", retry=RetryStrategy(max_attempts=3, wait=120))

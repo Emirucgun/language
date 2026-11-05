@@ -67,6 +67,13 @@ export const api = {
     request<void>("POST", "/api/onboarding/placement/answer", body),
   placementComplete: () =>
     request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
+  testsDue: () => request<Schemas["TestsDue"]>("GET", "/api/tests/due"),
+  retentionTest: () => request<Schemas["RetentionView"]>("GET", "/api/tests/retention"),
+  retentionAnswer: (body: Schemas["TestAnswer"]) =>
+    request<Schemas["RetentionResult"]>("POST", "/api/tests/retention/answer", body),
+  postTest: () => request<Schemas["PostView"]>("GET", "/api/tests/post"),
+  postAnswer: (body: Schemas["TestAnswer"]) => request<void>("POST", "/api/tests/post/answer", body),
+  postComplete: () => request<Schemas["PostResult"]>("POST", "/api/tests/post/complete"),
   recommendation: () => request<Schemas["Recommendation"]>("GET", "/api/practice/recommendation"),
   extra: (body: Schemas["ExtraRequest"]) => request<Schemas["ExtraView"]>("POST", "/api/practice/extra", body),
   dialogueStart: () => request<DialogueView>("POST", "/api/practice/dialogue"),

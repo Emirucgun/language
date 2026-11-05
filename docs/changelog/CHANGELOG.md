@@ -4,6 +4,9 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-05 | 14 gün hatırlama testi: kişiye özel, LLM'siz, kontrol öğeli; `retention_test_due` işi, `/tests/retention`, `analysis.hypotheses` (ADR-0008) | DZ-3 |
+| 2026-11-05 | Seviye testinin iki formu, çapraz atama ve sekiz hafta sonra son test; `fixed_tests.form` (göç 0006), `/tests/post`. B formu taslak | DZ-4 |
+| 2026-11-05 | Başlanmış test yeni sürüm yüklenince sıfırlanmıyor; LLM özeti seviyeyi yalnızca ön testten alıyor | DZ-4 |
 | 2026-11-05 | **[PROMPT]** `session/v3` (4 şık), `feedback/v3` ve `dialogue/v3` (öğrenci metni veri) | DZ-5, DZ-10 |
 | 2026-11-05 | Şıklar sunucuda öğrenciye özgü sabit sırayla karıştırılıyor; doğru cevap neredeyse hep ilk şıktı | EK-16 |
 | 2026-11-05 | Şıklı doğru tekrar aşamasında Hard, yazılı doğru Good; tempo şıklı ve yazılıyı ayrı sayıyor (ADR-0007) | DZ-5 |

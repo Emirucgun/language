@@ -8,10 +8,10 @@ Küratörlü ve sürümlü; uygulama rolü yalnızca okur. İçe aktarma: [tablo
 
 | Tablo | Not |
 | --- | --- |
-| `items` | Öğe havuzu. `kind`: word, chunk, structure. `forms`: doğrulayıcı için çekimli biçimler. `reference_sentences`: `[{en, tr}]`; içe aktarıcı doldurur, henüz okuyan yok (DZ-3) |
+| `items` | Öğe havuzu. `kind`: word, chunk, structure. `forms`: doğrulayıcı için çekimli biçimler. `reference_sentences`: `[{en, tr}]`; içe aktarıcı doldurur, hatırlama testi okur |
 | `vocab_allowlist` | Doğrulayıcının seviye sözlüğü (CEFR-J) |
 | `error_tags` | Türkçe açıklamanın tek kaynağı; LLM yalnızca kod seçer |
-| `fixed_tests` | Sabit, sürümlü ölçüm testleri. `purpose`: placement, pre, post, retention. Yalnızca placement kullanılıyor |
+| `fixed_tests` | Seviye testi: sürümlü, iki paralel form (`form`: A, B). Ön mü son mu olduğu olaydaki `phase` alanındadır. Hatırlama testi burada değildir |
 
 ## `learning` şeması
 
@@ -36,7 +36,7 @@ Küratörlü ve sürümlü; uygulama rolü yalnızca okur. İçe aktarma: [tablo
 
 Şemalar `api/app/events/schemas.py`; her olay `schema_version` taşır ve payload Pydantic ile doğrulanır.
 
-`consent_given`, `goal_set`, `fixed_test_answer`, `fixed_test_completed`, `curriculum_created`, `curriculum_replanned`, `activity_shown`, `answer_submitted`, `writing_submitted`, `rewrite_submitted`, `writing_assessed`, `feedback_shown`, `feedback_reaction`, `activity_flagged`, `extra_activity_chosen`, `dialogue_replied`, `session_completed`, `report_viewed`, `nps_submitted`.
+`consent_given`, `goal_set`, `fixed_test_answer`, `fixed_test_completed`, `retention_test_created`, `retention_test_answer`, `retention_test_completed`, `curriculum_created`, `curriculum_replanned`, `activity_shown`, `answer_submitted`, `writing_submitted`, `rewrite_submitted`, `writing_assessed`, `feedback_shown`, `feedback_reaction`, `activity_flagged`, `extra_activity_chosen`, `dialogue_replied`, `session_completed`, `report_viewed`, `nps_submitted`.
 
 Derecelendirilmiş olaylar istemciden yazılamaz: istemci yalnızca `events/router.py`'deki izin listesini gönderebilir.
 
@@ -44,9 +44,9 @@ Derecelendirilmiş olaylar istemciden yazılamaz: istemci yalnızca `events/rout
 
 | Hipotez | Kaynak |
 | --- | --- |
-| H1 hatırlama | `fixed_tests` ve olaylar (henüz yok: DZ-3) |
+| H1 hatırlama | `retention_test_answer`; hesap `analysis.hypotheses` |
 | H2 aktiflik | olaylar |
-| H3 ön ve son test | `fixed_tests` ve olaylar (henüz yok: DZ-4) |
+| H3 ön ve son test | `fixed_test_completed` (`phase`); hesap `analysis.hypotheses` |
 | H4 doğruluk | `reviews`, yalnızca `source = sample` |
 | H5 anlaşılırlık | `feedback_reaction` |
 | H6 memnuniyet | `nps_submitted` |

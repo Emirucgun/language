@@ -24,6 +24,8 @@ Her öğe durumu işlediği son olayı (`last_event_id`, filigran) tutar. `updat
 
 **Vade kesimi.** Günlük oturum yerel gün sonunu kullanır: gece üretilen oturum gün içinde vadesi dolacakları da kapsar. Serbest yazma şu an + 1 saat, ek çalışma şu an + 1 gün kullanır.
 
+**Hatırlama testi.** `app/scheduler/retention.py` hedef ve kontrol öğelerini seçer; kurallar [flows.md](flows.md#ölçüm-testleri). Test cevapları derece üretmez, tekrar motoru görmez.
+
 ## Günlük kota
 
 Tek tanım `app/scheduler/quotas.py`; oturum üretimi ve müfredat kapasitesi buradan okur.

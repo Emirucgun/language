@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { BlankPrompt, TestOptions, TestProgress } from "@/components/test-question";
 import { Button, Card, ErrorText, Loading, Screen } from "@/components/ui";
 import { ApiError, api, type Schemas } from "@/lib/api";
 import { useMe } from "@/lib/use-me";
@@ -10,7 +11,6 @@ import { useMe } from "@/lib/use-me";
 type View = Schemas["PlacementView"];
 type Result = Schemas["PlacementResult"];
 
-const BLANK = "___";
 const LEVEL_TEXT: Record<string, string> = {
   "pre-A1": "Başlangıç (A1 öncesi)",
   A1: "A1",
@@ -20,18 +20,6 @@ const LEVEL_TEXT: Record<string, string> = {
 // Yalnızca olay işleyicisinden çağrılır (render sırasında değil).
 function elapsedSince(start: number | null): number | null {
   return start === null ? null : Math.round(performance.now() - start);
-}
-
-function Prompt({ text }: { text: string }) {
-  const [before, after] = text.split(BLANK);
-  if (after === undefined) return <p className="text-lg leading-relaxed">{text}</p>;
-  return (
-    <p className="text-lg leading-relaxed">
-      {before}
-      <span className="mx-1 inline-block w-16 border-b-2 border-foreground align-baseline" aria-label="boşluk" />
-      {after}
-    </p>
-  );
 }
 
 /**
@@ -128,19 +116,9 @@ export default function PlacementPage() {
     );
   }
 
-  const position = answered.size + 1;
-  const total = view.questions.length;
-
   return (
     <Screen title="Seviye testi">
-      <div className="flex items-center justify-between text-sm text-subtle">
-        <span>
-          {position} / {total}
-        </span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
-        <div className="h-full bg-accent transition-all" style={{ width: `${(answered.size / total) * 100}%` }} />
-      </div>
+      <TestProgress done={answered.size} total={view.questions.length} />
 
       {current && (
         <div className="flex flex-col gap-4">
@@ -151,29 +129,8 @@ export default function PlacementPage() {
               </p>
             </Card>
           )}
-          <Prompt text={current.prompt} />
-          <div className="flex flex-col gap-2">
-            {current.options.map((option) => (
-              <button
-                key={option}
-                type="button"
-                disabled={busy}
-                onClick={() => choose(option)}
-                lang="en"
-                className="min-h-12 rounded-xl border border-line bg-card px-4 text-left text-base transition hover:bg-muted disabled:opacity-60"
-              >
-                {option}
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => choose("")}
-              className="min-h-12 rounded-xl border border-dashed border-line px-4 text-left text-subtle transition hover:bg-muted disabled:opacity-60"
-            >
-              Bilmiyorum
-            </button>
-          </div>
+          <BlankPrompt text={current.prompt} />
+          <TestOptions options={current.options} busy={busy} onChoose={choose} />
         </div>
       )}
       <ErrorText message={error} />

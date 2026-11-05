@@ -18,6 +18,7 @@ from app.events.models import Event
 from app.events.schemas import known_interests
 from app.llm.models import LearnerSnapshot
 from app.llm.prompts import estimate_tokens
+from app.onboarding.fixed_tests import placement_result
 from app.scheduler.models import ItemState
 
 MAX_INTERESTS = 5
@@ -68,7 +69,7 @@ def _latest_payload(session: Session, user_id: uuid.UUID, event_type: str) -> di
 
 def gather_facts(session: Session, user_id: uuid.UUID) -> LearnerFacts:
     user = session.get_one(User, user_id)
-    placement = _latest_payload(session, user_id, "fixed_test_completed")
+    placement = placement_result(session, user_id)
     goal = _latest_payload(session, user_id, "goal_set")
 
     errors = session.execute(
@@ -88,10 +89,9 @@ def gather_facts(session: Session, user_id: uuid.UUID) -> LearnerFacts:
         .select_from(ItemState)
         .where(ItemState.user_id == user_id, ItemState.state == REVIEW_STATE)
     )
-    level = placement.get("cefr_estimate")
     weak = goal.get("weak_skills")
     return LearnerFacts(
-        level=level if isinstance(level, str) else None,
+        level=placement.cefr_estimate if placement else None,
         goal=user.goal,
         daily_minutes=user.daily_minutes,
         interests=tuple(known_interests(user.interests)),

@@ -2,15 +2,16 @@
 
 ## Ekranlar
 
-`/login`, `/auth/verify`, `/onboarding/consent`, `/onboarding/goals`, `/onboarding/placement`, `/panel`, `/session`, `/practice/recall`, `/practice/reading`, `/practice/writing`, `/practice/dialogue`, `/feedback`, `/curriculum`, `/report`, `/review`.
+`/login`, `/auth/verify`, `/onboarding/consent`, `/onboarding/goals`, `/onboarding/placement`, `/panel`, `/session`, `/practice/recall`, `/practice/reading`, `/practice/writing`, `/practice/dialogue`, `/feedback`, `/curriculum`, `/report`, `/review`, `/tests/retention`, `/tests/post`.
 
 Yönlendirme onam → hedef → yerleştirme → panel sırasını zorlar. İlgi alanları sabit listeden seçilir. İnceleyen girişten doğrudan `/review`'a gider. Tipler FastAPI şemasından üretilir: `npm run gen:api`.
 
 ## Yerleştirme testi
 
-- **Sorular:** `scripts/placement_v1.py`, taslak; 24 özgün soru, A1 ve A2'den 12'şer: kelime, yapı, iki kısa okuma. Dinleme yok. Işıl onayı `import_placement` ile kaydedilir; içerik değişirse yeni sürüm açılır, eski cevaplar eski sürüme bağlı kalır.
+- **Sorular:** iki paralel form, ikisi de taslak: `scripts/placement_v1.py` (A) ve `scripts/placement_form_b.py` (B). Form başına 24 özgün soru, A1 ve A2'den 12'şer: kelime, yapı, kısa okuma. Dinleme yok. Işıl onayı `import_placement` ile kaydedilir; içerik değişirse yeni sürüm açılır, eski cevaplar eski sürüme bağlı kalır.
 - **Puanlama (`onboarding/placement.py`):** A1 %50'nin altındaysa pre-A1; değilse A2 %50'nin altındaysa A1; değilse A2. Alt seviye: kendi seviyesinde en az %80 ise 2, değilse 1. "Bilmiyorum" yanlış sayılır. pre-A1 öğrenci A1.1'den başlar.
 - **Akış (`onboarding/fixed_tests.py`):** her cevap `fixed_test_answer`, sonuç `fixed_test_completed` olayı. Doğru cevap gösterilmez, cevaplar tekrar motorunu etkilemez, yarıda kalan test kaldığı yerden sürer. Şıklar kullanıcıya özgü ama sabit sırayla karıştırılır.
+- **Form:** kullanıcı kimliğinden sabit: yarısı A, yarısı B. Tek form yüklüyse o verilir. Başlanmış test yeni sürüm yüklense de değişmez.
 - **Etkisi:** A1 öğrencisine yalnızca A1 öğeleri, A2 öğrencisine önce A2 öğeleri gelir; paylaşılan içerik alt seviyeye göre eşleşir.
 
 ## Müfredat
@@ -71,6 +72,21 @@ Doğru cümle yalnızca `submit_rewrite` ile, yeniden yazmadan sonra döner. Yen
 - **Tempo:** şıklı ve yazılı ayrı sayılır (şıkta en az 5, yazıda en az 3 cevap). Şıkta %60'ın ya da yazıda %40'ın altındaysa yavaş (kapasite × 0,75). Şıkta en az %90, yazıda en az %70 ve en az 4 oturumsa hızlı (× 1,25); yazılı kanıt olmadan hızlanmaz. Az veride normal. Eşikler başlangıç değeridir.
 - **Yeniden plan (`weekly.py`):** hafta aktifse ajan ilerleme özetiyle çalışır: derecelendirilmiş olayı olan öğeler havuzdan çıkar, kapasite tempoya göre ayarlanır, `summary_tr` değişikliği ve nedenini söyler. Hiç gelmeyene LLM çağrısı yapılmaz; rapor yine yazılır.
 - **Ekran:** `/report`; panelde rapor varsa bağlantı.
+
+## Ölçüm testleri
+
+`app/assessment/`, kararlar [ADR-0008](../decisions/0008-olcum-testleri.md). Doğru cevap gösterilmez, tekrar motoru etkilenmez, panelde kart olarak çıkar.
+
+**Son test (H3).** Ön testin üzerinden 56 gün geçince açılır; zamanı gelmeden 409. Diğer form verilir, puanlama ortaktır (`score`). Sonuç `phase = post` ile yazılır; seviyeyi ve LLM özetini değiştirmez.
+
+**Hatırlama testi (H1).**
+
+- **Hedef öğeler (`scheduler/retention.py`):** ilk derecelendirilmiş çalışmasından 14–28 gün geçmiş, son üç günde çalışılmamış, daha önce test edilmemiş öğeler. En az 5, en fazla 12; rastgele ama öğrenci ve gün için sabit.
+- **Kontrol:** hiç karşılaşılmamış, hedeflerle aynı seviye ve türde 3 öğe. Öğrenciye "bazı sorular henüz çalışmadığın kelimelerden" denir. Sonuç ekranındaki puana girmez.
+- **Soru (`assessment/retention.py`):** öğenin yalın hâliyle geçtiği ilk örnek cümle; Türkçe çeviri ipucu, İngilizcede boşluk, aynı tür ve seviyeden üç çeldirici. Kurulamayan öğe teste girmez.
+- **Olaylar:** `retention_test_created` testin tüm içeriğini ve şablon sürümünü taşır, `retention_test_answer` ve `retention_test_completed` izler. Durum bu olaylardan okunur, ayrı tablo yoktur. `item_id` payload'dadır: olay sütununda olsa tekrar motoru ve raporlar görürdü.
+
+**Analiz.** `uv run python -m analysis.hypotheses` H1 için hedef oranı, alt sınır, öğrenci ortalaması, taban ve farkı; H3 için ortalama artış, işaret testi ve başlanan forma göre artışı yazar. Düz betik, `# %%` hücreli; Jupyter gerekmez.
 
 ## İnceleme
 

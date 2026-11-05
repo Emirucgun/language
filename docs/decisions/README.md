@@ -11,5 +11,6 @@ Her önemli karar tek sayfa, numaralı dosyadır: `0001-kisa-baslik.md`. Eski ka
 | [0005](0005-eposta-brevo.md) | E-posta için Brevo | Kabul edildi |
 | [0006](0006-llm-saglayici-claude.md) | LLM sağlayıcısı olarak Claude | Kabul edildi, OA-5'te yeniden değerlendirilecek |
 | [0007](0007-sikli-cevap-derecesi.md) | Şıklı cevabın FSRS derecesi | Kabul edildi |
+| [0008](0008-olcum-testleri.md) | Ölçüm testlerinin tasarımı | Kabul edildi |
 
 OpenAI ve TTS kararları OA-5 sonrası eklenir.
