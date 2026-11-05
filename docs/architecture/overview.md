@@ -13,7 +13,7 @@
 | Arka plan işleri | procrastinate | Postgres tabanlı kuyruk; Redis gerekmez. Bkz. [jobs.md](jobs.md) |
 | Tekrar motoru | py-fsrs | `scheduler` modülünün arkasında sarmalı. Bkz. [scheduler.md](scheduler.md) |
 | Kimlik | Kendi magic link akışımız ve davet kodu | Bkz. [security-privacy.md](security-privacy.md) |
-| LLM | Anthropic Claude, `LLMClient` arkasında | Bkz. [llm.md](llm.md), [ADR-0006](../decisions/0006-llm-saglayici-claude.md) |
+| LLM | Anthropic Claude; OpenAI adaptörü hazır, ayarla açılır. `LLMClient` arkasında | Bkz. [llm.md](llm.md), [ADR-0006](../decisions/0006-llm-saglayici-claude.md) |
 | Ses | `gpt-realtime-2.1-mini`, `TTSClient` arkasında | Sunucu tarafı hazır, arayüz yok. Bkz. [llm.md](llm.md#ses) |
 | E-posta | Brevo SMTP | [ADR-0005](../decisions/0005-eposta-brevo.md) |
 | Paket yönetimi | Python: uv, Node: npm | |

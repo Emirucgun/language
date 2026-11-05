@@ -7,6 +7,7 @@ from functools import cache
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, status
+from pydantic import SecretStr
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,7 +15,8 @@ from app.auth.email import EmailSender, sender_from_settings
 from app.auth.models import AuthSession, User
 from app.config import settings
 from app.db import SessionLocal
-from app.llm.client import AnthropicClient, LLMClient
+from app.llm.client import LLMClient
+from app.llm.routing import routing_client
 from app.llm.service import contains_email
 
 
@@ -29,14 +31,17 @@ def get_db() -> Iterator[Session]:
             raise
 
 
+def _secret(value: SecretStr | None) -> str | None:
+    return value.get_secret_value().strip() if value else None
+
+
 @cache
-def _anthropic() -> AnthropicClient:
-    key = settings.anthropic_api_key
-    return AnthropicClient(api_key=key.get_secret_value() if key else None)
+def _router() -> LLMClient:
+    return routing_client(_secret(settings.anthropic_api_key), _secret(settings.openai_api_key))
 
 
 def get_llm_client() -> LLMClient:
-    return _anthropic()
+    return _router()
 
 
 def get_email_sender() -> EmailSender:

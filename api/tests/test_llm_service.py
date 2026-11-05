@@ -4,8 +4,6 @@ import os
 import uuid
 from collections.abc import Iterator
 
-import anthropic
-import httpx2
 import pytest
 from alembic.config import Config
 from pydantic import BaseModel
@@ -14,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.feedback.llm_schema import WritingFeedback
+from app.llm.client import LLMProviderError
 from app.llm.service import (
     DailyLimitExceeded,
     Prompt,
@@ -61,6 +60,7 @@ def test_successful_call_is_logged_with_cost(session: Session) -> None:
     )
     assert parsed == OK
     assert call.status == "ok"
+    assert call.provider == "anthropic"
     assert call.model == "claude-sonnet-5-5"
     assert call.cache_read_tokens == 900
     assert call.cost_microusd and call.cost_microusd > 0
@@ -83,7 +83,7 @@ def test_unparsable_output_falls_back_and_keeps_raw_text(session: Session) -> No
 
 def test_api_error_does_not_raise(session: Session) -> None:
     user = _user(session)
-    error = anthropic.APIConnectionError(request=httpx2.Request("POST", "https://api.test"))
+    error = LLMProviderError("APIConnectionError: bağlantı yok")
     parsed, call = generate_structured(
         session,
         FakeClient(error=error),

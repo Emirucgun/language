@@ -39,10 +39,17 @@ class LLMResult:
     raw_text: str | None
 
 
+class LLMProviderError(Exception):
+    """API ya da ağ hatası; `service` sağlayıcıyı bilmeden yakalar."""
+
+
 class LLMClient(Protocol):
     def complete(self, request: LLMRequest) -> LLMResult:
         """Yanıt geldiyse istisna fırlatmaz: ret, kesilme ve şema dışı çıktı `parsed=None`
-        döner, token kullanımı korunur. Yalnızca API ve ağ hataları istisnadır."""
+        döner, token kullanımı korunur. API ve ağ hataları `LLMProviderError` olur.
+
+        `stop_reason` sağlayıcıdan bağımsızdır: end_turn, max_tokens, refusal ya da başka bir
+        sebep. `usage.input_tokens` önbellek dışı girdidir."""
         ...
 
 
@@ -92,17 +99,20 @@ class AnthropicClient:
         schema = anthropic.transform_schema(request.output_type.model_json_schema())
         create: Any = self._client.beta.messages.create  # aşırı yüklemeler **extra ile uyuşmaz
         started = time.monotonic()
-        response: BetaMessage = create(
-            model=config.model,
-            max_tokens=config.max_tokens,
-            system=build_system(request),
-            messages=[{"role": "user", "content": request.task}],
-            output_config={
-                "effort": config.effort,
-                "format": {"type": "json_schema", "schema": schema},
-            },
-            **extra,
-        )
+        try:
+            response: BetaMessage = create(
+                model=config.model,
+                max_tokens=config.max_tokens,
+                system=build_system(request),
+                messages=[{"role": "user", "content": request.task}],
+                output_config={
+                    "effort": config.effort,
+                    "format": {"type": "json_schema", "schema": schema},
+                },
+                **extra,
+            )
+        except anthropic.APIError as exc:
+            raise LLMProviderError(f"{type(exc).__name__}: {exc}") from exc
         latency_ms = round((time.monotonic() - started) * 1000)
 
         usage = response.usage

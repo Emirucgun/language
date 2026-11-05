@@ -15,7 +15,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | FSRS tekrar motoru | Kısmi | Derece eşlemesi (DZ-5) | Emir |
 | Yazma geri bildirimi | Kısmi | Yeniden yazma kapısı (DZ-9) | Emir |
 | Bekleyen geri bildirim işi | Hazır | | Emir |
-| Ek çalışma | Hazır | EK-7 | Emir |
+| Ek çalışma | Hazır | | Emir |
 | Yazılı diyalog | Kısmi | Düzeltmeler gösterilmiyor (EK-11) | Emir |
 | Haftalık rapor ve yeniden plan | Hazır | | Emir |
 | Dinleme ve TTS | Kısmi | Sunucu tarafı hazır, Işıl'ın dinlemesi bekleniyor (OA-6); arayüz yok (GL-3) | Işıl, Emir |
@@ -23,7 +23,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | Altın set ve `eval.golden` | Kısmi | İçe aktarıcı ve araç hazır; etiketli set Işıl'dan | Işıl |
 | İnceleme ekranı | Hazır | Sunucuya çıkınca Işıl kullanabilir (GL-5); yerelde de denenebilir | Işıl |
 | Hatırlama, ön ve son test | Yok | DZ-3, DZ-4 | Emir, Işıl |
-| OpenAI geçişi | Kısmi | Anahtar var; metin adaptörü yok (OA-2); OA-5 dev seti | Emir |
+| OpenAI geçişi | Kısmi | Adaptör hazır, varsayılan Claude; karar OA-5'te, dev seti Işıl'dan | Işıl, Emir |
 | CI | Hazır | | Emir |
 | Barındırma, yedek, izleme | Yok | GL-5, GL-7 | Emir |
 | PWA ve Playwright | Yok | Yap ya da belgeden çıkar kararı (EK-15) | Emir |
@@ -40,7 +40,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 
 ## Bu hafta
 
-Şu an: Part 7 (ölçüm aracı). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
+Şu an: Part 8 (OpenAI adaptörü). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
 
 ## Kod hazır, onay bekliyor
 

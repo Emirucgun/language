@@ -27,6 +27,7 @@ Ad ve e-posta prompt'a girmez. **Gidenler:** öğrencinin yazdığı metin, hede
 
 - Öğrenci metninde e-posta varsa istek 422 ile reddedilir, hiçbir şey saklanmaz, metin ekranda kalır (`deps.reject_personal_data`). İlgi alanı için de aynısı.
 - `generate_structured` içindeki koruma son savunma hattıdır: e-posta deseni bulursa çağrıyı yapmaz, `None` döner ve adresi kaydetmez.
+- OpenAI çağrıları `store=False` ile yapılır: yanıtlar sağlayıcıda uygulama verisi olarak saklanmaz. Kötüye kullanım günlükleri ayrıdır: 30 güne kadar tutulabilir.
 - Koruma yalnızca e-postayı tanır. Telefon, ad gibi bilgiler için "kişisel bilgi yazmayın" uyarısı planlanıyor (DZ-11).
 - İlgi alanları serbest metin olduğu için hem enjeksiyon hem uygunsuz içerik kapısıdır; listeden seçime dönecek (DZ-10).
 

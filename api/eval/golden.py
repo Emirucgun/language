@@ -23,10 +23,11 @@ from sqlalchemy.orm import Session
 
 from app import models  # noqa: F401 - tüm tabloları kaydeder
 from app.config import settings
+from app.deps import get_llm_client
 from app.feedback import prompt as feedback_prompt
 from app.feedback.llm_schema import WritingFeedback
 from app.feedback.service import active_tags
-from app.llm.client import AnthropicClient, LLMClient
+from app.llm.client import LLMClient
 from app.llm.service import Prompt, generate_structured
 from app.reports.models import Review
 from app.validator.core import Lexicon, load_lexicon
@@ -141,15 +142,12 @@ def main() -> None:
     splits = splits_to_run(args.final, bool(os.environ.get("CI")))
     if not args.data.exists():
         sys.exit(f"Altın set yok: {args.data}. Önce: uv run python -m scripts.import_golden")
-    key = settings.anthropic_api_key
-    if key is None:
-        sys.exit("ANTHROPIC_API_KEY tanımlı değil.")
     cases = load_cases(args.data)
 
     engine = create_engine(settings.database_url)
     with Session(engine) as session:
         lexicon = load_lexicon(session)
-        client = AnthropicClient(api_key=key.get_secret_value())
+        client = get_llm_client()  # sağlayıcı ayardan: LLM_PROVIDER_FEEDBACK
         evaluate = evaluator(session, client, lexicon, set(active_tags(session)))
         text = (
             report(cases, evaluate, splits)

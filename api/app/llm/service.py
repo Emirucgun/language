@@ -10,13 +10,12 @@ import re
 import uuid
 from dataclasses import dataclass
 
-import anthropic
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.llm.client import LLMClient, LLMRequest
+from app.llm.client import LLMClient, LLMProviderError, LLMRequest
 from app.llm.models import LlmCall
 from app.llm.pricing import cost_microusd
 from app.llm.purposes import Purpose, purpose_config
@@ -87,6 +86,7 @@ def generate_structured[T: BaseModel](
     call = LlmCall(
         user_id=user_id,
         purpose=prompt.purpose,
+        provider=config.provider,
         model=config.model,
         prompt_version=prompt.prompt_version,
         snapshot_id=prompt.snapshot_id,
@@ -108,9 +108,9 @@ def generate_structured[T: BaseModel](
                 output_type=output_type,
             )
         )
-    except anthropic.APIError as exc:
+    except LLMProviderError as exc:
         call.status = "error"
-        call.raw_on_failure = f"{type(exc).__name__}: {exc}"[:2000]
+        call.raw_on_failure = str(exc)[:2000]
     else:
         call.model = result.model
         call.input_tokens = result.usage.input_tokens

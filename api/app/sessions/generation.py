@@ -23,6 +23,7 @@ from app.content.models import Item
 from app.curriculum.service import ensure_curriculum, new_item_order
 from app.llm.client import LLMClient
 from app.llm.prompts import render_static
+from app.llm.purposes import Purpose
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
@@ -221,9 +222,10 @@ def _round(
     snapshot_id: int,
     snapshot_text: str,
     lexicon: Lexicon,
+    purpose: Purpose = "session",
 ) -> Round:
     prompt = Prompt(
-        purpose="session",
+        purpose=purpose,
         prompt_version=PROMPT_VERSION,
         static_block=render_static("session", PROMPT_VERSION),
         snapshot_id=snapshot_id,
@@ -347,6 +349,7 @@ def build_activities(
     session_id: int | None,
     recommended: bool,
     template_salt: str,
+    purpose: Purpose = "session",
 ) -> list[int]:
     """Plan → etkinlikler: yeniden kullanım, üretim, bir kez daha, şablon, kayıt.
 
@@ -378,7 +381,7 @@ def build_activities(
         if not missing:
             break
         result = _round(
-            db, client, user, _narrow(plan, missing), snapshot.id, snapshot.text, lexicon
+            db, client, user, _narrow(plan, missing), snapshot.id, snapshot.text, lexicon, purpose
         )
         finals += result.accepted
         rejected += result.rejected

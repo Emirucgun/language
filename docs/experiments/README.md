@@ -16,3 +16,4 @@
 - [2026-11-04 · Müfredat ajanı ilk çalışma](2026-11-04-mufredat.md)
 - [2026-11-04 · Realtime API ile metinden ses](2026-11-04-tts-realtime.md)
 - [2026-11-05 · eval.golden uçtan uca deneme](2026-11-05-eval-golden-deneme.md)
+- [2026-11-05 · OpenAI adaptörü, şemalar ve önbellek](2026-11-05-openai-adaptor.md)

@@ -1,6 +1,6 @@
 # LLM katmanı
 
-Sağlayıcı kararı: [ADR-0006](../decisions/0006-llm-saglayici-claude.md). Maliyet modeli: [deney kaydı](../experiments/2026-11-03-maliyet-modeli.md).
+Sağlayıcı kararı: [ADR-0006](../decisions/0006-llm-saglayici-claude.md); OpenAI adaptörü hazır, karar OA-5'te. Maliyet modeli: [deney kaydı](../experiments/2026-11-03-maliyet-modeli.md).
 
 ## Tek kapı
 
@@ -11,15 +11,17 @@ generate_structured(session, client, prompt=Prompt(...), output_type=Model, user
     -> (parsed | None, LlmCall)
 ```
 
+**Sağlayıcıdan bağımsız.** `service.py` hiçbir SDK'yı bilmez. Adaptörler (`client.py`: Claude, `openai_client.py`: OpenAI) kendi biçimlerini tek sözleşmeye çevirir: hata `LLMProviderError`, `stop_reason` end_turn, max_tokens ya da refusal, `Usage.input_tokens` önbellek dışı girdi. `routing.py` isteği ayardaki sağlayıcıya yönlendirir; adaptör ilk kullanımda kurulur, anahtarı olmayan sağlayıcı uygulamayı engellemez.
+
 **Hata sözleşmesi.** Ret, kesilme, şema dışı çıktı, API hatası ve kişisel veri istisna fırlatmaz: sonuç `None` döner, çağıran yedek yola geçer ("şimdilik atladık" ya da şablon). Yalnızca günlük limit `DailyLimitExceeded` fırlatır. Başarısız çağrının token kullanımı da kaydedilir.
 
 Çağrı zaman aşımı 60 sn; SDK geçici hataları (429, 5xx, bağlantı) 2 kez yeniden dener.
 
-`LLMClient.complete` yanıt geldiyse istisna fırlatmaz. Bu yüzden adaptör SDK'nın `parse` yardımcısını değil `create` kullanır ve JSON'u `parse_output` ile kendisi doğrular: `parse` şema dışı yanıtta `ValidationError` fırlatıp kullanım bilgisini kaybettirir. Yalnızca `stop_reason == "end_turn"` kabul edilir; kesilmiş JSON tam görünse de güvenilmez.
+`LLMClient.complete` yanıt geldiyse istisna fırlatmaz. Bu yüzden iki adaptör de SDK'nın `parse` yardımcısını değil `create` kullanır ve JSON'u `parse_output` ile kendisi doğrular: `parse` şema dışı yanıtta istisna fırlatıp kullanım bilgisini kaybettirir. Yalnızca `stop_reason == "end_turn"` kabul edilir; kesilmiş JSON tam görünse de güvenilmez.
 
 ## Amaç tablosu
 
-`app/llm/purposes.py`; model adları ayardır (`app/config.py`).
+`app/llm/purposes.py`; model adları ve sağlayıcı ayardır (`app/config.py`). Sağlayıcı amaç grubu başına seçilir, karma mümkündür: `LLM_PROVIDER_GENERATION` (session, extra), `LLM_PROVIDER_FEEDBACK` (feedback, dialogue), `LLM_PROVIDER_CURRICULUM`. Varsayılan `anthropic`; tablo bu durumu gösterir. OpenAI karşılıkları: üretim `gpt-6-luna`, diğerleri `gpt-6.1-sol`.
 
 | Amaç | Model | `max_tokens` | `effort` | Sunucu tarafı yedek |
 | --- | --- | --- | --- | --- |
@@ -29,7 +31,7 @@ generate_structured(session, client, prompt=Prompt(...), output_type=Model, user
 | `dialogue` | Sonnet 5.5 | 1500 | low | Evet |
 | `curriculum` | Sonnet 5.5 | 8000 | medium | Evet |
 
-`extra` ayarı şu an kullanılmıyor: ek çalışma `session` amacıyla çağrılıyor (EK-7). Kullanıcı başına günlük limit 20 çağrı; başarısız çağrılar da sayılır.
+Kullanıcı başına günlük limit 20 çağrı; başarısız çağrılar da sayılır.
 
 Model API'si notları: `temperature` ve `top_p` gönderilmez, güncel API reddediyor. Düşünme varsayılan olarak açık ve çıktı token'ı olarak faturalanır; `max_tokens` buna dahildir, maliyet `effort` ile yönetilir.
 
@@ -55,6 +57,8 @@ Hafıza dosyası fikri: kısa bir özet oturum başında sisteme donmuş olarak 
 1. **Statik blok:** amaç başına herkes için aynı; rol, kurallar, hata kodu listesi, örnekler. 1 saatlik önbellek.
 2. **Öğrenci özeti** (`app/llm/snapshot.py`): en fazla 300 token, günde bir donar. Seviye, hedef, ilgi alanları, zayıf beceri, en sık 3 hata kodu, bugünün odağı. 5 dakikalık önbellek.
 3. **Görev:** yalnızca bu görevin girdisi; önbelleğe alınmaz.
+
+**OpenAI'de önbellek otomatiktir.** Statik blok `instructions`ta, özet ve görev tek `user` mesajında gider. Özet ayrı mesaj olunca farklı öğrenciler statik bloğu paylaşamıyor, okuma sıfıra düşüyordu: [ölçüm](../experiments/2026-11-05-openai-adaptor.md). En az 1.024 token gerekir; statik bloklar bunu aşıyor, prompt kısaltılırken dikkat. Süre varsayılan 30 dakika. `input_tokens` önbellekli token'ları içerir, adaptör çıkarır. Yanıtlar `store=False` ile saklanmaz.
 
 Maliyetin büyük kısmı çıktıda olduğu için çıktı da hedeflenir: Türkçe açıklama katalogdan gelir, model yalnızca kod ve kısa ipucu döndürür; şemalar girdiyi yankılamaz; doğrulanmış kısa etkinlikler (hatırlama, yeni öğe) aynı öğe, seviye ve ilgi alanı için yeniden kullanılır. Okuma, diyalog ve geri bildirim kişiye özeldir.
 

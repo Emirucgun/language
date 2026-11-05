@@ -3,7 +3,7 @@
 ## Bugün
 
 - **Birim ve entegrasyon (pytest):** tekrar motoru, olay yeniden oynatma eşitliği, müfredat kuralları, doğrulayıcı, günlük limit, prompt'ta kişisel veri olmaması, içe aktarma, inceleme kuyruğu, HTTP akışları. Veritabanı testleri `teacher_test` kullanır.
-- **LLM:** testler gerçek API'ye gitmez. Sahte istemciler `LLMClient` düzeyindedir (`tests/fakes.py`). Adaptör ise gerçek SDK ile, yalnızca ağı sahteleyerek sınanır (`tests/test_llm_adapter.py`): sahte istemci SDK'nın davranışını gösteremez.
+- **LLM:** testler gerçek API'ye gitmez. Sahte istemciler `LLMClient` düzeyindedir (`tests/fakes.py`). Adaptörler ise gerçek SDK'larla, yalnızca ağı sahteleyerek sınanır (`tests/test_llm_adapter.py`): aynı senaryolar iki sağlayıcıda da koşar, sahte istemci SDK'nın davranışını gösteremez.
 - **Statik:** ruff, mypy (strict, `app/` için), ESLint, `tsc`.
 - **CI (`.github/workflows/ci.yml`):** pull request ve `main`'e push'ta `api` (Postgres servisiyle ruff, mypy, pytest), `web` (lint, typecheck) ve `changelog` işleri. Atlanan test varsa `api` kırılır.
 
@@ -22,7 +22,7 @@ uv run python -m eval.golden --purpose feedback           # yalnızca dev
 uv run python -m eval.golden --purpose feedback --final   # dev ve test, ayrı ayrı
 ```
 
-Gerçek API çağrısı yapar, ücretlidir, veritabanına iz bırakmaz. CI çalıştırmaz; `--final` CI'da reddedilir. Üretimdeki prompt ve doğrulayıcıyı kullanır, öğrenci özeti vermez.
+Gerçek API çağrısı yapar, ücretlidir, veritabanına iz bırakmaz. Sağlayıcı ayardan gelir: `LLM_PROVIDER_FEEDBACK=openai`. CI çalıştırmaz; `--final` CI'da reddedilir. Üretimdeki prompt ve doğrulayıcıyı kullanır, öğrenci özeti vermez.
 
 **Bölme.** Prompt ayarlanırken yalnızca `dev` koşulur. `test` yalnızca nihai ölçüm içindir: ayar sırasında görülen cümle ölçümü geçersiz kılar. `test`teki bir cümle `dev`e alınamaz.
 

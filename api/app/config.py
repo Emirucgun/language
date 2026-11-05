@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,6 +18,14 @@ class Settings(BaseSettings):
     llm_model_feedback: str = "claude-sonnet-5-5"
     llm_model_curriculum: str = "claude-sonnet-5-5"
     llm_daily_call_limit_per_user: int = 20
+
+    # Sağlayıcı amaç grubu başına seçilir; OA-5 kararına kadar varsayılan Claude.
+    llm_provider_generation: Literal["anthropic", "openai"] = "anthropic"
+    llm_provider_feedback: Literal["anthropic", "openai"] = "anthropic"
+    llm_provider_curriculum: Literal["anthropic", "openai"] = "anthropic"
+    openai_model_generation: str = "gpt-6-luna"
+    openai_model_feedback: str = "gpt-6.1-sol"
+    openai_model_curriculum: str = "gpt-6.1-sol"
 
     # Ses. Yeni ses tanıma kodu yalnızca gpt-transcribe kullanır (OA-7).
     openai_api_key: SecretStr | None = None

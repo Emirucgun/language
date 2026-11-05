@@ -1,7 +1,10 @@
-"""Model fiyatları ve çağrı maliyeti (mikro-dolar). Kaynak: Anthropic liste fiyatı, Kas 2026.
+"""Model fiyatları ve çağrı maliyeti (mikro-dolar). Kaynak: liste fiyatları, Kas 2026.
 
-Önbellek: 1 saatlik yazma girdi fiyatının 2 katı, 5 dakikalık yazma 1.25 katı, okuma 0.1 katı.
+Anthropic önbelleği: 1 saatlik yazma girdinin 2 katı, 5 dakikalık 1.25 katı, okuma 0.1 katı.
 Statik bloklar 1 saatlik önbelleğe yazılır; hesap bu yüzden tutucu olarak 2 katı kullanır.
+
+OpenAI önbelleği: 30 dakikalık yazma 1.25 katı (12 saatlik 2.5 katı kullanılmıyor), okuma
+tabloda; Sol ve Terra'da 0.05 katı.
 """
 
 from dataclasses import dataclass
@@ -11,25 +14,28 @@ from dataclasses import dataclass
 class Price:
     input_per_mtok: float
     output_per_mtok: float
+    cache_read_per_mtok: float
+    cache_write_per_mtok: float
 
-    @property
-    def cache_read_per_mtok(self) -> float:
-        return self.input_per_mtok * 0.1
 
-    @property
-    def cache_write_per_mtok(self) -> float:
-        return self.input_per_mtok * 2
+def _claude(input_price: float, output_price: float) -> Price:
+    return Price(input_price, output_price, input_price * 0.1, input_price * 2)
 
 
 PRICES: dict[str, Price] = {
-    "claude-haiku-5-5": Price(0.10, 0.50),
-    "claude-sonnet-5-5": Price(2.00, 10.00),
-    "claude-opus-5-5": Price(4.00, 20.00),
+    "claude-haiku-5-5": _claude(0.10, 0.50),
+    "claude-sonnet-5-5": _claude(2.00, 10.00),
+    "claude-opus-5-5": _claude(4.00, 20.00),
+    "gpt-6-luna": Price(0.10, 0.50, 0.01, 0.125),
+    "gpt-6.1-sol": Price(2.00, 10.00, 0.10, 2.50),
+    "gpt-6.1-terra": Price(1.00, 5.00, 0.05, 1.25),
 }
 
 
 @dataclass(frozen=True, slots=True)
 class Usage:
+    """Sağlayıcıdan bağımsız: `input_tokens` önbellek dışı girdidir, adaptör buna çevirir."""
+
     input_tokens: int
     output_tokens: int
     cache_read_tokens: int = 0

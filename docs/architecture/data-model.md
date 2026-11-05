@@ -29,7 +29,7 @@ Küratörlü ve sürümlü; uygulama rolü yalnızca okur. İçe aktarma: [tablo
 | `item_states` | Türev FSRS durumu; `last_event_id` filigrandır |
 | `learner_snapshots` | LLM'e giden öğrenci özeti; günde bir donar |
 | `weekly_reports` | Türev; kullanıcının gördüğü hal saklanır |
-| `llm_calls` | Prompt metni saklanmaz. Ham yanıt yalnızca hatada (`raw_on_failure`); 30 gün temizliği henüz yok (EK-14) |
+| `llm_calls` | `provider`: anthropic, openai. Prompt metni saklanmaz. Ham yanıt yalnızca hatada (`raw_on_failure`); 30 gün temizliği henüz yok (EK-14) |
 | `reviews` | Işıl'ın kararları. `verdict`: correct, wrong_teaching, off_level, unclear. `source`: sample, flag; H4 yalnızca `sample`dan hesaplanır |
 
 ## Olaylar

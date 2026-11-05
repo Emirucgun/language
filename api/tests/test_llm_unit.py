@@ -86,6 +86,16 @@ def test_snapshot_is_short_and_deterministic() -> None:
     assert text.count("interest") == 5
 
 
+def test_cached_tokens_are_priced_per_provider() -> None:
+    usage = Usage(
+        input_tokens=1000, output_tokens=100, cache_read_tokens=1000, cache_write_tokens=1000
+    )
+    # Sonnet: 1000*2 + 100*10 + 1000*0.2 + 1000*4 ; Sol: 1000*2 + 100*10 + 1000*0.1 + 1000*2.5
+    assert cost_microusd("claude-sonnet-5-5", usage) == 7200
+    assert cost_microusd("gpt-6.1-sol", usage) == 5600
+    assert cost_microusd("gpt-6-luna", usage) == 285
+
+
 def test_anthropic_request_shape(monkeypatch: pytest.MonkeyPatch) -> None:
     """Gerçek API'ye gitmeden SDK'ya verilen parametreleri doğrular."""
     from app.llm.client import FALLBACK_BETA, AnthropicClient

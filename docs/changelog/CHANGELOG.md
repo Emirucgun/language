@@ -4,6 +4,10 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-05 | OpenAI Responses adaptörü ve amaç grubu başına sağlayıcı ayarı; `service.py` sağlayıcıdan bağımsız; `llm_calls.provider` (göç 0005). Varsayılan Claude | OA-2 |
+| 2026-11-05 | Strict şema, ret ve kesilme iki adaptörde aynı sözleşmeyle; dört şema gerçek API'den geçti | OA-3 |
+| 2026-11-05 | OpenAI önbelleği: özet `user` mesajında, önbellekli token sayımı ve fiyatları düzeltildi | OA-4 |
+| 2026-11-05 | Ek çalışma çağrıları `extra` amacıyla kaydediliyor | EK-7 |
 | 2026-11-05 | `eval.golden`: altın set raporu, bölmeler ayrı, `test` yalnızca `--final`, CI'da reddedilir | DZ-2 |
 | 2026-11-05 | Oranlarla birlikte %95 güven sınırı; H4 tanımı blueprint'te üst sınıra çevrildi, X bekliyor | DZ-1 |
 | 2026-11-04 | Teknik MVP belgesi `docs/architecture/` altına bölündü, bayat ve çelişen yerler koda göre düzeltildi; eski belge indeks | DK-2, DZ-12 |
