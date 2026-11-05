@@ -6,9 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.content.models import ErrorTag
-from app.llm.prompts import render_static
+from app.llm.prompts import quote_learner, render_static
 
-PROMPT_VERSION = "v2"  # v2: hata yeri karakter konumu değil alıntı (konumu sunucu bulur)
+PROMPT_VERSION = "v3"  # v3: öğrenci metni sınırlayıcı içinde veri; enjeksiyona karşı
+
+
+def free_writing_task(item_text: str) -> str:
+    """Serbest yazma görevi: yalnızca sunucuda kurulur, istemciden görev metni alınmaz."""
+    return f'Write one sentence about yourself using "{item_text}".'
 
 
 def error_catalog(session: Session) -> str:
@@ -33,5 +38,5 @@ def task_block(
     ]
     if recent_codes:
         lines.append(f"Recent errors on these items: {', '.join(recent_codes)}")
-    lines.append(f"Learner: {learner_text}")
+    lines.append(f"Learner: {quote_learner(learner_text)}")
     return "\n".join(lines)

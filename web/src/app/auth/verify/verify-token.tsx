@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Card, Loading } from "@/components/ui";
 import { ApiError, api } from "@/lib/api";
-import { nextPath } from "@/lib/use-me";
+import { landingPath } from "@/lib/use-me";
 
 export function VerifyToken() {
   const token = useSearchParams().get("token");
@@ -20,7 +20,7 @@ export function VerifyToken() {
     sent.current = true;
     api
       .verifyLogin(token)
-      .then((me) => router.replace(nextPath(me)))
+      .then((me) => router.replace(landingPath(me)))
       .catch((err: unknown) =>
         setError(err instanceof ApiError ? err.message : "Bir sorun oldu, tekrar dene."),
       );

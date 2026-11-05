@@ -43,6 +43,7 @@ class Me(BaseModel):
     consent_done: bool
     placement_done: bool
     level: str | None  # yerleştirme tahmini: pre-A1 / A1 / A2
+    role: str
 
     @classmethod
     def of(cls, db: Session, user: User) -> Me:
@@ -57,6 +58,7 @@ class Me(BaseModel):
             consent_done=user.consent_at is not None and user.is_adult_confirmed,
             placement_done=placement is not None,
             level=placement.cefr_estimate if placement else None,
+            role=user.role,
         )
 
 

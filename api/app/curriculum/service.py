@@ -31,18 +31,9 @@ from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
 from app.reports.service import WeeklyMetrics
+from app.scheduler.quotas import daily_quota
 
 PROMPT_VERSION = "v2"  # v2: Türkçe metinde İngilizce dilbilgisi terimi yok; "bu hafta" dili
-
-
-def _new_per_day(daily_minutes: int | None) -> int:
-    """Günde yeni öğe; oturum üretimindeki kotayla aynı (sessions.generation._quotas)."""
-    minutes = daily_minutes or 15
-    if minutes <= 10:
-        return 2
-    if minutes <= 20:
-        return 3
-    return 4
 
 
 def pool_for(db: Session, start_level: str) -> list[PoolItem]:
@@ -73,14 +64,21 @@ def _weak_skills(db: Session, user_id: uuid.UUID) -> list[str]:
 PACE_FACTOR = {"slow": 0.75, "normal": 1.0, "fast": 1.25}
 
 
+def _rate(value: float | None) -> str:
+    return "n/a" if value is None else str(value)
+
+
 def _progress_lines(progress: WeeklyMetrics) -> list[str]:
     error = progress.top_error.code if progress.top_error else "none"
-    success = "n/a" if progress.success_rate is None else progress.success_rate
+    success = _rate(progress.success_rate)
     return [
         "WEEKLY REPLAN. Progress in the week that is ending now (call it 'bu hafta'):",
         f"- active days: {progress.active_days}, sessions completed: {progress.sessions_completed}",
         f"- new items met: {progress.new_items}, consolidated items: {progress.consolidated_items}",
         f"- review success rate: {success}",
+        f"- multiple-choice answers: {progress.choice_answers}, "
+        f"written answers: {progress.written_answers}, "
+        f"written success: {_rate(progress.written_success)}",
         f"- pace decided by the app: {progress.pace} (capacity already adjusted)",
         f"- most frequent error: {error}",
         "Items the learner has already met are removed from the pool. Plan the next 8 weeks "
@@ -136,7 +134,7 @@ def ensure_curriculum(
 
     start_level, _ = user_level(db, user.id)
     pool = pool_for(db, start_level)
-    capacity = weekly_capacity(_new_per_day(user.daily_minutes))
+    capacity = weekly_capacity(daily_quota(user.daily_minutes).max_new)
     if existing is not None:
         # "Görülmüş" tek doğruluk kaynağından: derecelendirilmiş olayı olan öğe.
         seen = set(
@@ -227,16 +225,19 @@ def new_item_order(curriculum: Curriculum, now: datetime | None = None) -> list[
 
 
 def view(db: Session, curriculum: Curriculum) -> CurriculumView:
-    week_now = current_week(curriculum)
+    # Plan haftaları sürüme göreli: her haftalık yeniden plan yeni bir 8 hafta üretir ve
+    # 1. haftası "bu hafta"dır. Öğrenci ise ilerlediğini görmeli, sayı sıfırlanmamalı.
+    offset = curriculum.version - 1
+    week_now = current_week(curriculum) + offset
     texts = {item_id: text_en for item_id, text_en in db.execute(select(Item.id, Item.text_en))}
     weeks = [
         WeekView(
-            week=w["week"],
+            week=w["week"] + offset,
             focus_tr=w["focus_tr"],
             can_do_tr=w["can_do_tr"],
             item_count=len(w["item_ids"]),
             items_en=[texts[i] for i in w["item_ids"] if i in texts],
-            current=w["week"] == week_now,
+            current=w["week"] + offset == week_now,
             skill_weights=SkillWeights.model_validate(w["skill_weights"]),
         )
         for w in sorted(curriculum.weeks, key=lambda w: w["week"])

@@ -1,4 +1,4 @@
-"""Bekleyen geri bildirimlerin yeniden işlenmesi (Technical MVP, 7: retry_deferred_feedback).
+"""Bekleyen geri bildirimlerin yeniden işlenmesi (docs/architecture/jobs.md).
 
 "Şimdilik atladık" denen yazılar (günlük limit, API hatası, ret, doğrulayıcıdan kalma)
 saatlik işle yeniden değerlendirilir. Öğrenci hazır olanları panelde görür.
@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.content.models import Item
 from app.events.models import Event
 from app.feedback.models import Feedback
+from app.feedback.prompt import free_writing_task
 from app.feedback.service import FeedbackView, assess_writing, stored_view
 from app.llm.client import LLMClient
 from app.sessions.models import Activity, ActivityContent
@@ -66,8 +67,7 @@ def _task_for(db: Session, writing: Event) -> tuple[str, list[int]]:
     item = db.get(Item, writing.item_id) if writing.item_id else None
     if item is None:
         return "Write one sentence about yourself.", []
-    # app/sessions/router.py: writing_task ile aynı şablon.
-    return f'Write one sentence about yourself using "{item.text_en}".', [item.id]
+    return free_writing_task(item.text_en), [item.id]
 
 
 def retry_writing(db: Session, client: LLMClient, writing_event_id: int) -> FeedbackView | None:

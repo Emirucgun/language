@@ -1,9 +1,11 @@
 # A1–A2 AI İngilizce Özel Öğretmen (MVP)
 
-Ürün ve teknik kararlar `MD files/` altında:
+Ürün belgesi ve iş listesi `MD files/` altında:
 
 - `MVP Roadmap ve Blueprint – A1–A2 AI İngilizce Özel Öğretmen.md`: ne ve neden
-- `Technical MVP – A1–A2 AI İngilizce Özel Öğretmen.md`: nasıl
+- `Düzeltme ve Geliştirme Listesi.md`: sıradaki işler
+
+Teknik belgeler, durum tablosu ve kararlar: [docs/](docs/README.md). Yapay zeka aracı kuralları: [AGENTS.md](AGENTS.md).
 
 ## Yapı
 

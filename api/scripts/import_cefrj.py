@@ -25,6 +25,8 @@ from lemminflect import getAllInflections, getAllInflectionsOOV
 from openpyxl import load_workbook
 from sqlalchemy import create_engine, text
 
+from scripts.sheets import utf8_output
+
 SOURCE = "cefrj-1.6"
 SHEET = "ALL_sep"  # her yazım biçimi ayrı satırda (a.m. / A.M.)
 LEVELS = ("A1", "A2", "B1", "B2")
@@ -69,6 +71,7 @@ def read_workbook(path: Path) -> dict[str, tuple[str, set[str]]]:
 
 
 def main() -> None:
+    utf8_output()
     path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PATH
     entries = read_workbook(path)
     load_dotenv(Path(__file__).resolve().parents[1] / ".env")

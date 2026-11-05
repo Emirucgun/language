@@ -13,6 +13,7 @@ export type ChoiceView = Schemas["ChoiceView"];
 export type AnswerResult = Schemas["AnswerResult"];
 export type DialogueView = Schemas["DialogueView"];
 export type PartnerLine = Schemas["PartnerLine"];
+export type ReviewQueueView = Schemas["ReviewQueueView"];
 
 export class ApiError extends Error {
   constructor(
@@ -66,6 +67,13 @@ export const api = {
     request<void>("POST", "/api/onboarding/placement/answer", body),
   placementComplete: () =>
     request<Schemas["PlacementResult"]>("POST", "/api/onboarding/placement/complete"),
+  testsDue: () => request<Schemas["TestsDue"]>("GET", "/api/tests/due"),
+  retentionTest: () => request<Schemas["RetentionView"]>("GET", "/api/tests/retention"),
+  retentionAnswer: (body: Schemas["TestAnswer"]) =>
+    request<Schemas["RetentionResult"]>("POST", "/api/tests/retention/answer", body),
+  postTest: () => request<Schemas["PostView"]>("GET", "/api/tests/post"),
+  postAnswer: (body: Schemas["TestAnswer"]) => request<void>("POST", "/api/tests/post/answer", body),
+  postComplete: () => request<Schemas["PostResult"]>("POST", "/api/tests/post/complete"),
   recommendation: () => request<Schemas["Recommendation"]>("GET", "/api/practice/recommendation"),
   extra: (body: Schemas["ExtraRequest"]) => request<Schemas["ExtraView"]>("POST", "/api/practice/extra", body),
   dialogueStart: () => request<DialogueView>("POST", "/api/practice/dialogue"),
@@ -78,6 +86,8 @@ export const api = {
   answer: (activityId: number, body: Schemas["AnswerRequest"]) =>
     request<AnswerResult>("POST", `/api/activities/${activityId}/answer`, body),
   event: (body: Schemas["ClientEvent"]) => request<Schemas["Recorded"]>("POST", "/api/events", body),
+  reviewNext: () => request<ReviewQueueView>("GET", "/api/review/next"),
+  review: (body: Schemas["ReviewRequest"]) => request<void>("POST", "/api/review", body),
 };
 
 // Onam metninin sürümü sunucudakiyle aynı olmalı (app/config.py: consent_version).

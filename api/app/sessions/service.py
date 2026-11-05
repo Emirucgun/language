@@ -4,6 +4,7 @@ Cevap her zaman sunucuda değerlendirilir; FSRS derecesini istemci belirleyemez.
 Aynı soru iki kez değerlendirilmez (tekrar motoru aynı cevabı iki kez saymasın).
 """
 
+import random
 import re
 import uuid
 from typing import Any
@@ -14,7 +15,8 @@ from sqlalchemy.orm import Session
 from app.content.models import Item
 from app.events.models import Event
 from app.events.service import record_event
-from app.scheduler.engine import rating_for_answer
+from app.scheduler.engine import is_reviewing, rating_for_choice
+from app.scheduler.models import ItemState
 from app.scheduler.service import update_item_states
 from app.sessions.models import Activity, ActivityContent, StudySession
 from app.sessions.schemas import (
@@ -83,7 +85,7 @@ def activity_view(db: Session, activity: Activity, content: ActivityContent) -> 
         if kind == "writing"
         else all(f"q{i}" in answered for i in range(len(questions))),
         questions=[
-            ChoiceView(id=f"q{i}", prompt=q.prompt, options=q.options)
+            ChoiceView(id=f"q{i}", prompt=q.prompt, options=shuffled(q.options, activity, i))
             for i, q in enumerate(questions)
         ],
     )
@@ -129,6 +131,28 @@ def owned_activity(
     return row[0], row[1]
 
 
+def shuffled(options: list[str], activity: Activity, index: int) -> list[str]:
+    """Öğrenciye özgü ama sabit sıra: model doğru cevabı neredeyse hep ilk şıkka koyuyor.
+
+    Paylaşılan içerikte de herkes farklı sıra görür; sayfa yenilenince sıra değişmez.
+    """
+    order = list(options)
+    random.Random(f"{activity.user_id}:{activity.id}:{index}").shuffle(order)
+    return order
+
+
+def _reviewing(db: Session, user_id: uuid.UUID, item_id: int | None) -> bool:
+    if item_id is None:
+        return False
+    return is_reviewing(
+        db.scalar(
+            select(ItemState.state).where(
+                ItemState.user_id == user_id, ItemState.item_id == item_id
+            )
+        )
+    )
+
+
 def normalize(text: str) -> str:
     return " ".join(re.findall(r"[a-z0-9']+", text.lower()))
 
@@ -158,7 +182,11 @@ def answer(db: Session, user_id: uuid.UUID, activity_id: int, req: AnswerRequest
         },
         activity_id=activity.id,
         item_id=item_id,
-        rating=rating_for_answer(correct=correct, hinted=req.hinted) if item_id else None,
+        rating=rating_for_choice(
+            correct=correct, hinted=req.hinted, reviewing=_reviewing(db, user_id, item_id)
+        )
+        if item_id
+        else None,
     )
     if item_id:
         update_item_states(db, user_id)

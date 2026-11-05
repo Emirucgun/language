@@ -22,14 +22,30 @@ class AnswerRating(IntEnum):
     EASY = 4
 
 
-def rating_for_answer(*, correct: bool, hinted: bool = False) -> AnswerRating:
-    """Cevaptan FSRS derecesi. Kural katmanı karar verir; LLM bu değeri üretmez.
+def rating_for_choice(
+    *, correct: bool, hinted: bool = False, reviewing: bool = False
+) -> AnswerRating:
+    """Şıklı cevaptan FSRS derecesi. Kural katmanı karar verir; LLM bu değeri üretmez.
+
+    Şıkta tahmin şansı var, bu yüzden tekrar aşamasında doğru yalnızca Hard sayılır. Öğrenme
+    aşamasında Good kalır: FSRS'te Hard öğrenmeden çıkarmaz, her zaman doğru bilen öğrenci
+    8 haftada 68 kez tekrar ederdi (docs/experiments/2026-11-05-derece-eslemesi.md).
 
     "Easy" bilerek kullanılmıyor: A1–A2'de tek doğru cevap ezberi aşırı güveni beslemesin.
     """
     if not correct:
         return AnswerRating.AGAIN
-    return AnswerRating.HARD if hinted else AnswerRating.GOOD
+    return AnswerRating.HARD if hinted or reviewing else AnswerRating.GOOD
+
+
+def rating_for_writing(*, correct: bool) -> AnswerRating:
+    """İpucusuz yazılı üretim en güçlü kanıttır; tahmin edilemez."""
+    return AnswerRating.GOOD if correct else AnswerRating.AGAIN
+
+
+def is_reviewing(state: int | None) -> bool:
+    """Öğe öğrenme aşamasını bitirmiş mi?"""
+    return state == State.Review
 
 
 @dataclass(frozen=True, slots=True)

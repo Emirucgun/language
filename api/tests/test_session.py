@@ -4,7 +4,8 @@ import os
 import re
 import uuid
 from collections.abc import Iterator
-from datetime import date
+from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import psycopg
 import pytest
@@ -13,14 +14,19 @@ from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session
 
 from app.auth.models import User
+from app.curriculum.models import Curriculum
 from app.curriculum.schemas import CurriculumDraft
+from app.events.models import Event
+from app.events.schemas import known_interests
 from app.llm.client import LLMRequest, LLMResult
 from app.llm.pricing import Usage
 from app.scheduler.models import ItemState
 from app.sessions import service
-from app.sessions.generation import ensure_session
+from app.sessions.generation import ensure_session, plan_session
 from app.sessions.models import Activity, ActivityContent
+from app.sessions.router import writing_task
 from app.sessions.schemas import (
+    OPTION_COUNT,
     AnswerRequest,
     Choice,
     Example,
@@ -30,6 +36,8 @@ from app.sessions.schemas import (
     SessionOutput,
     Writing,
 )
+from app.sessions.templates import recall_from_card
+from app.sessions.validation import ItemCard, validate_reading
 from app.validator.core import Lexicon, words
 from tests.conftest import _libpq_url
 
@@ -72,7 +80,7 @@ class SessionFake:
             if item_id in self.leaky
             else "Ali likes ___ very much."
         )
-        others = [o for o in ("tea", "milk", "football") if o != target][:2]
+        others = [o for o in ("tea", "milk", "football", "book") if o != target][:3]
         return Choice(prompt=prompt, options=[target, *others], answer=target)
 
     def complete(self, request: LLMRequest) -> LLMResult:
@@ -109,12 +117,12 @@ class SessionFake:
                         questions=[
                             Choice(
                                 prompt="Where does Ali live?",
-                                options=["Istanbul", "London", "Paris"],
+                                options=["Istanbul", "London", "Paris", "Ankara"],
                                 answer="Istanbul",
                             ),
                             Choice(
                                 prompt="What does Ali like?",
-                                options=["coffee", "tea", "milk"],
+                                options=["coffee", "tea", "milk", "football"],
                                 answer="coffee",
                             ),
                         ],
@@ -153,6 +161,13 @@ def item_ids(migrated_db: Config) -> list[int]:
             ).fetchone()
             assert row is not None
             ids.append(int(row[0]))
+        # Yalnızca şablon çeldiricisi: dört şık için havuzda öğe olmalı; seçime girmesin diye sonda.
+        for en in ("tea", "milk", "book"):
+            conn.execute(
+                "INSERT INTO content.items (pool_version, kind, text_en, text_tr, cefr, sublevel) "
+                "VALUES ('test', 'word', %s, %s, 'A1', 9)",
+                (en, en),
+            )
     return ids
 
 
@@ -184,6 +199,151 @@ def _kinds(db: Session, session_id: int) -> list[tuple[str, str]]:
         .order_by(Activity.position)
     ).all()
     return [(k, o) for k, o in rows]
+
+
+def _state(db: Session, user: User, item_id: int, due: datetime) -> None:
+    db.add(
+        ItemState(
+            user_id=user.id,
+            item_id=item_id,
+            state=2,
+            stability=5.0,
+            difficulty=5.0,
+            due=due,
+            last_review=due - timedelta(days=5),
+            last_event_id=1,
+        )
+    )
+    db.flush()
+
+
+def test_items_due_later_today_are_selected_in_the_learners_time_zone(
+    db: Session, item_ids: list[int]
+) -> None:
+    """03:00'te üretilen oturum gün içinde vadesi dolacakları da kapsar; yarınkileri almaz."""
+    user = _user(db)
+    user.timezone = "Asia/Tokyo"  # UTC+9: UTC gün sonu ile yerel gün sonu farklı
+    zone = ZoneInfo(user.timezone)
+    tonight, tomorrow, _ = item_ids
+    _state(db, user, tonight, datetime.combine(TODAY, time(23, 30), zone))
+    _state(db, user, tomorrow, datetime.combine(TODAY + timedelta(days=1), time(0, 30), zone))
+
+    plan = plan_session(db, user, TODAY)
+
+    assert [c.id for c in plan.review] == [tonight]
+
+
+def _curriculum(db: Session, user: User, order: list[int]) -> None:
+    weeks = [{"week": 1, "item_ids": order}]
+    db.add(Curriculum(user_id=user.id, version=1, weeks=weeks, skill_weights={}))
+    db.flush()
+
+
+def test_free_writing_follows_the_curriculum(db: Session, item_ids: list[int]) -> None:
+    user = _user(db)
+    planned = item_ids[-1]  # havuz sırasında sonda
+    _curriculum(db, user, [planned, *item_ids[:-1]])
+
+    assert writing_task(db, user).target_item_ids == [planned]
+
+
+def test_free_writing_skips_seen_items_in_curriculum_order(
+    db: Session, item_ids: list[int]
+) -> None:
+    user = _user(db)
+    first, second, _ = item_ids
+    _curriculum(db, user, [first, second])
+    _state(db, user, first, datetime.now(UTC) + timedelta(days=5))
+
+    assert writing_task(db, user).target_item_ids == [second]
+
+
+def test_free_writing_never_leaves_the_plan_when_everything_is_seen(
+    db: Session, item_ids: list[int]
+) -> None:
+    user = _user(db)
+    _curriculum(db, user, item_ids[:1])
+    _state(db, user, item_ids[0], datetime.now(UTC) + timedelta(days=5))
+
+    assert writing_task(db, user).target_item_ids == item_ids[:1]
+
+
+def _reading(options: list[str]) -> Reading:
+    question = Choice(prompt="Where does Ali live?", options=options, answer=options[0])
+    return Reading(item_ids=[1], text_en=READING_TEXT, questions=[question, question])
+
+
+def test_reading_questions_need_four_options_too() -> None:
+    card = ItemCard(1, "coffee", "kahve", ())
+    ok = validate_reading(_reading(["Istanbul", "London", "Paris", "Ankara"]), [card], LEXICON)
+    short = validate_reading(_reading(["Istanbul", "London", "Paris"]), [card], LEXICON)
+    assert "option_count" not in {i.code for i in ok.issues}
+    assert "option_count" in {i.code for i in short.issues}
+
+
+def test_template_recall_has_four_options_or_none() -> None:
+    cards = [ItemCard(i, f"word{i}", f"k{i}", ()) for i in range(1, 8)]
+    recall = recall_from_card(cards[0], cards)
+    assert recall is not None
+    assert len(recall.question.options) == OPTION_COUNT
+    assert recall.question.answer in recall.question.options
+    assert recall_from_card(cards[0], cards[:3]) is None  # az şıklı soru yerine soru yok
+
+
+def test_template_distractors_do_not_depend_on_pool_order() -> None:
+    cards = [ItemCard(i, f"word{i}", f"k{i}", ()) for i in range(1, 8)]
+    first = recall_from_card(cards[0], cards)
+    second = recall_from_card(cards[0], list(reversed(cards)))
+    assert first == second
+
+
+def test_options_are_shuffled_per_learner_but_stable(db: Session, item_ids: list[int]) -> None:
+    """Model doğru cevabı neredeyse hep ilk şıkka koyuyordu (30 sorunun 29'u)."""
+    options = ["answer", "b", "c", "d"]
+    first_user, second_user = uuid.uuid4(), uuid.uuid4()
+    orders = [
+        service.shuffled(options, Activity(id=i, user_id=first_user), 0) for i in range(1, 41)
+    ]
+    assert all(sorted(order) == sorted(options) for order in orders)
+    answer_first = sum(order[0] == "answer" for order in orders)
+    assert answer_first < 20  # sabit yerde değil
+    same = Activity(id=1, user_id=first_user)
+    assert service.shuffled(options, same, 0) == service.shuffled(options, same, 0)
+    others = [service.shuffled(options, Activity(id=1, user_id=second_user), i) for i in range(9)]
+    assert len({tuple(order) for order in others}) > 1
+
+
+def _stored_answer(db: Session, user: User, activity_id: int) -> str:
+    _, content = service.owned_activity(db, user.id, activity_id)
+    return service._questions(content.kind, content.content)[0].answer
+
+
+def test_correct_choice_is_rated_by_the_items_stage(db: Session, item_ids: list[int]) -> None:
+    """Öğrenme aşamasında Good, tekrar aşamasında Hard; yazılan derece olayda durur."""
+    user = _user(db, "{}")
+    study = ensure_session(db, SessionFake(), user, TODAY, lexicon=LEXICON)
+    first, second = service.session_view(db, study).activities[:2]
+    _, content = service.owned_activity(db, user.id, second.id)
+    _state(db, user, content.item_ids[0], datetime.now(UTC) + timedelta(days=9))
+
+    for activity in (first, second):
+        answer = _stored_answer(db, user, activity.id)
+        service.answer(db, user.id, activity.id, AnswerRequest(question_id="q0", answer=answer))
+
+    ratings = db.execute(
+        select(Event.activity_id, Event.rating).where(
+            Event.user_id == user.id, Event.type == "answer_submitted"
+        )
+    ).all()
+    assert dict(ratings) == {first.id: 3, second.id: 2}
+
+
+def test_junk_interests_never_reach_the_learner_data(db: Session, item_ids: list[int]) -> None:
+    """EK-9: serbest metin döneminden kalan uzun değer içeriği kırmaz."""
+    user = _user(db, "{" + "x" * 80 + ",football}")
+    study = ensure_session(db, SessionFake(), user, TODAY, lexicon=LEXICON)
+    assert study.status == "ready"
+    assert known_interests(user.interests) == ["football"]
 
 
 def test_valid_output_builds_the_session_in_one_call(db: Session, item_ids: list[int]) -> None:
@@ -249,7 +409,7 @@ def test_answers_are_graded_on_the_server_once(db: Session, item_ids: list[int])
     study = ensure_session(db, SessionFake(), user, date(2026, 11, 10), lexicon=LEXICON)
     view = service.session_view(db, study)
     new_item = view.activities[0]
-    correct = new_item.questions[0].options[0]  # sahte çıktıda doğru şık başta
+    correct = _stored_answer(db, user, new_item.id)
 
     result = service.answer(
         db, user.id, new_item.id, AnswerRequest(question_id="q0", answer=correct.upper())

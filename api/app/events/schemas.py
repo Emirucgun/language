@@ -4,7 +4,9 @@ Bir payload'un şekli değişirse `schema_version` artırılır ve eski sürüm�
 silinmez: eski olaylar yeniden oynatılırken hâlâ okunabilmelidir.
 """
 
-from typing import Literal
+from collections.abc import Iterable
+from datetime import datetime
+from typing import Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,15 +24,37 @@ class ConsentGiven(Payload):
     is_adult_confirmed: Literal[True]
 
 
+Interest = Literal[
+    "football",
+    "sports",
+    "music",
+    "films",
+    "food",
+    "travel",
+    "books",
+    "technology",
+    "games",
+    "animals",
+    "nature",
+    "shopping",
+]
+INTERESTS: frozenset[str] = frozenset(get_args(Interest))
+
+
+def known_interests(values: Iterable[str]) -> list[str]:
+    """Serbest metin döneminden kalan değerler prompt'a girmez."""
+    return sorted(set(values) & INTERESTS)
+
+
 class GoalSet(Payload):
     goal: Literal["travel", "work", "school", "daily_conversation"]
     daily_minutes: int = Field(ge=5, le=120)
     weak_skills: list[Literal["reading", "writing", "listening", "vocabulary"]]
-    interests: list[str] = Field(max_length=10)
+    interests: list[Interest] = Field(max_length=10)
 
 
 class FixedTestAnswer(Payload):
-    """Yerleştirme, ön/son test ve 14 gün hatırlama testi cevapları (H1, H3)."""
+    """Seviye testi cevapları: yerleştirme (ön test) ve son test (H3)."""
 
     test_id: int
     question_id: str
@@ -46,6 +70,47 @@ class FixedTestCompleted(Payload):
     # Sonradan eklenen isteğe bağlı alanlar: eski olaylar da geçerli kalır (sürüm 1).
     sublevel: int | None = None
     level_scores: dict[str, float] | None = None
+    phase: Literal["pre", "post"] | None = None  # boş: ön test
+
+
+class RetentionQuestion(Payload):
+    """Hatırlama testinin bir sorusu; testin içeriği olayda durur (H1)."""
+
+    id: str
+    item_id: int
+    group: Literal["target", "control"]
+    sentence_en: str
+    sentence_tr: str
+    options: list[str]
+    answer: str
+    first_studied: datetime | None = None
+
+
+class RetentionTestCreated(Payload):
+    test_id: str
+    template_version: int
+    questions: list[RetentionQuestion]
+
+
+class RetentionTestAnswer(Payload):
+    """`item_id` bilerek payload'da: tekrar motoru ve raporlar bu cevabı görmesin."""
+
+    test_id: str
+    question_id: str
+    item_id: int
+    group: Literal["target", "control"]
+    answer: str
+    correct: bool
+    days_since_study: int | None = None
+    duration_ms: int | None = None
+
+
+class RetentionTestCompleted(Payload):
+    test_id: str
+    target_correct: int
+    target_total: int
+    control_correct: int
+    control_total: int
 
 
 class AnswerSubmitted(Payload):
@@ -87,6 +152,8 @@ class WritingAssessed(Payload):
 
 class ActivityFlagged(Payload):
     reason: str | None = Field(default=None, max_length=500)
+    # Hedef geri bildirimdir; yoksa olayın etkinliği. Serbest yazmada etkinlik yoktur.
+    feedback_id: int | None = None
 
 
 class ExtraActivityChosen(Payload):
@@ -124,6 +191,9 @@ PAYLOADS: dict[tuple[str, int], type[Payload]] = {
     ("goal_set", 1): GoalSet,
     ("fixed_test_answer", 1): FixedTestAnswer,
     ("fixed_test_completed", 1): FixedTestCompleted,
+    ("retention_test_created", 1): RetentionTestCreated,
+    ("retention_test_answer", 1): RetentionTestAnswer,
+    ("retention_test_completed", 1): RetentionTestCompleted,
     ("curriculum_created", 1): Empty,
     ("curriculum_replanned", 1): Empty,
     ("activity_shown", 1): Empty,

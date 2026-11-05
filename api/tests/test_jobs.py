@@ -1,11 +1,14 @@
 """Gece ön üretimi: kim seçilir, iş kuyruğa nasıl girer, iş oturumu nasıl üretir."""
 
 import asyncio
+import json
 import os
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, date, datetime
+from typing import Any
 
+import psycopg
 import pytest
 from alembic.config import Config
 from procrastinate.testing import InMemoryConnector
@@ -14,6 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app import jobs
 from app.sessions.scheduling import users_needing_session
+from tests.conftest import _libpq_url
 from tests.test_session import LEXICON, SessionFake, item_ids  # noqa: F401 - fixture
 
 
@@ -24,6 +28,21 @@ def _tz_with_local_hour(hour: int) -> str:
         if (utc_hour + offset) % 24 == hour:
             return f"Etc/GMT{-offset:+d}" if offset else "UTC"
     raise AssertionError("uygun ofset yok")
+
+
+@pytest.fixture(scope="module")
+def placement_test_id(migrated_db: Config) -> Iterator[int]:
+    """Sürüm 0: `current_test` en yüksek sürümü seçer, diğer testleri etkilemez."""
+    with psycopg.connect(_libpq_url("TEST_DATABASE_URL")) as conn:
+        row = conn.execute(
+            "INSERT INTO content.fixed_tests (purpose, version, questions) "
+            "VALUES ('placement', 0, '[]') RETURNING id"
+        ).fetchone()
+        assert row is not None
+        conn.commit()
+        yield int(row[0])
+        conn.execute("DELETE FROM content.fixed_tests WHERE id = %s", (row[0],))
+        conn.commit()
 
 
 @pytest.fixture
@@ -59,14 +78,32 @@ def _user(
     ).scalar_one()
 
 
-def test_selection_rules(db: Session) -> None:
+def _placed(db: Session, user_id: uuid.UUID, test_id: int) -> uuid.UUID:
+    """Olay eski tarihli: yerleştirme testi aktiflik penceresini etkilemesin."""
+    db.execute(
+        text(
+            "INSERT INTO learning.events (user_id, type, payload, occurred_at, recorded_at) "
+            "VALUES (:u, 'fixed_test_completed', CAST(:p AS jsonb), "
+            "now() - interval '30 days', now() - interval '30 days')"
+        ),
+        {"u": user_id, "p": json.dumps({"test_id": test_id, "score": 0.5})},
+    )
+    return user_id
+
+
+def test_selection_rules(db: Session, placement_test_id: int) -> None:
     after_three, before_three = _tz_with_local_hour(5), _tz_with_local_hour(1)
-    due = _user(db, tz=after_three)
-    too_early = _user(db, tz=before_three)
-    no_consent = _user(db, tz=after_three, consent=False)
-    no_goal = _user(db, tz=after_three, goal=None)
-    inactive = _user(db, tz=after_three, created_days_ago=30)
-    returning = _user(db, tz=after_three, created_days_ago=30)
+
+    def placed(**kwargs: Any) -> uuid.UUID:
+        return _placed(db, _user(db, **kwargs), placement_test_id)
+
+    due = placed(tz=after_three)
+    too_early = placed(tz=before_three)
+    no_consent = placed(tz=after_three, consent=False)
+    no_goal = placed(tz=after_three, goal=None)
+    inactive = placed(tz=after_three, created_days_ago=30)
+    mid_placement = _user(db, tz=after_three)  # hedef var, test bitmedi: seviyesi belli değil
+    returning = placed(tz=after_three, created_days_ago=30)
     db.execute(
         text(
             "INSERT INTO learning.events (user_id, type, occurred_at) "
@@ -74,7 +111,7 @@ def test_selection_rules(db: Session) -> None:
         ),
         {"u": returning},
     )
-    ready = _user(db, tz=after_three)
+    ready = placed(tz=after_three)
     db.execute(
         text(
             "INSERT INTO learning.study_sessions (user_id, local_date, status) "
@@ -85,7 +122,8 @@ def test_selection_rules(db: Session) -> None:
 
     selected = {user_id for user_id, _ in users_needing_session(db)}
     assert {due, returning} <= selected
-    assert selected.isdisjoint({too_early, no_consent, no_goal, inactive, ready})
+    excluded = {too_early, no_consent, no_goal, inactive, ready, mid_placement}
+    assert selected.isdisjoint(excluded)
 
 
 def test_scheduler_queues_one_job_per_user_and_day(monkeypatch: pytest.MonkeyPatch) -> None:

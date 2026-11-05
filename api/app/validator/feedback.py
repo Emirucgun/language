@@ -1,4 +1,4 @@
-"""Yazma geri bildirimi doğrulayıcısı (Technical MVP, 6: "Geri bildirim" satırı).
+"""Yazma geri bildirimi doğrulayıcısı (docs/architecture/validator.md).
 
 Geçemeyen geri bildirim öğrenciye gösterilmez; öğrenci "şimdilik atladık" görür ve
 metin sonra yeniden işlenir. Hedef H4: yanlış öğretme ve cevabı ele verme sıfıra yakın.
