@@ -1,15 +1,46 @@
 from datetime import UTC, datetime, timedelta
 
-from app.scheduler.engine import AnswerRating, apply_review, rating_for_answer, retrievability
+from app.scheduler.engine import (
+    AnswerRating,
+    apply_review,
+    is_reviewing,
+    rating_for_choice,
+    rating_for_writing,
+    retrievability,
+)
 from app.scheduler.service import fold_events
 
 T0 = datetime(2026, 11, 9, 8, tzinfo=UTC)
 
 
+def test_correct_choice_counts_less_once_the_item_is_in_review() -> None:
+    """Şıkta tahmin şansı var; ama öğrenme aşamasında Hard öğeyi kilitlerdi."""
+    assert rating_for_choice(correct=True, reviewing=False) is AnswerRating.GOOD
+    assert rating_for_choice(correct=True, reviewing=True) is AnswerRating.HARD
+    assert rating_for_choice(correct=False, reviewing=True) is AnswerRating.AGAIN
+
+
+def test_written_production_is_the_strongest_evidence() -> None:
+    assert rating_for_writing(correct=True) is AnswerRating.GOOD
+    assert rating_for_writing(correct=False) is AnswerRating.AGAIN
+
+
+def test_choice_only_learner_is_not_stuck_in_daily_reviews() -> None:
+    """Hep Hard deseydik öğe 8 haftada 68 kez tekrar edilirdi; kural bunu önler."""
+    state, now, reviews = None, T0, 0
+    while now < T0 + timedelta(days=56):
+        reviewing = state is not None and is_reviewing(state.state)
+        state = apply_review(state, rating_for_choice(correct=True, reviewing=reviewing), now)
+        reviews += 1
+        now = max(state.due, now + timedelta(hours=20))
+    assert reviews <= 8
+    assert state is not None and is_reviewing(state.state)
+
+
 def test_rating_rules() -> None:
-    assert rating_for_answer(correct=False) is AnswerRating.AGAIN
-    assert rating_for_answer(correct=True, hinted=True) is AnswerRating.HARD
-    assert rating_for_answer(correct=True) is AnswerRating.GOOD
+    assert rating_for_choice(correct=False) is AnswerRating.AGAIN
+    assert rating_for_choice(correct=True, hinted=True) is AnswerRating.HARD
+    assert rating_for_choice(correct=True) is AnswerRating.GOOD
 
 
 def test_same_reviews_give_same_state() -> None:

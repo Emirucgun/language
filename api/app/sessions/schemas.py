@@ -11,11 +11,14 @@ from pydantic import BaseModel, Field
 BLANK = "___"
 
 
+OPTION_COUNT = 4  # rastgele doğru yapma ihtimali %25
+
+
 class Choice(BaseModel):
     """Tek doğru cevaplı çoktan seçmeli soru."""
 
     prompt: str = Field(description="Question text in English. Recall prompts contain ___ once.")
-    options: list[str] = Field(description="Exactly 3 options, one of them correct.")
+    options: list[str] = Field(description="Exactly 4 options, one of them correct.")
     answer: str = Field(description="The correct option, copied exactly.")
 
 

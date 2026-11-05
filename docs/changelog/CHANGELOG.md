@@ -4,6 +4,11 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-05 | **[PROMPT]** `session/v3` (4 şık), `feedback/v3` ve `dialogue/v3` (öğrenci metni veri) | DZ-5, DZ-10 |
+| 2026-11-05 | Şıklar sunucuda öğrenciye özgü sabit sırayla karıştırılıyor; doğru cevap neredeyse hep ilk şıktı | EK-16 |
+| 2026-11-05 | Şıklı doğru tekrar aşamasında Hard, yazılı doğru Good; tempo şıklı ve yazılıyı ayrı sayıyor (ADR-0007) | DZ-5 |
+| 2026-11-05 | Okuma şıkları denetleniyor; şablon sorular dört şıklı, çeldirici havuzdan | EK-8 |
+| 2026-11-05 | İlgi alanları sabit listeden, istemci görev metni gönderemiyor, öğrenci metni sınırlayıcı içinde; 10 enjeksiyon örneği | DZ-10, EK-9 |
 | 2026-11-05 | OpenAI Responses adaptörü ve amaç grubu başına sağlayıcı ayarı; `service.py` sağlayıcıdan bağımsız; `llm_calls.provider` (göç 0005). Varsayılan Claude | OA-2 |
 | 2026-11-05 | Strict şema, ret ve kesilme iki adaptörde aynı sözleşmeyle; dört şema gerçek API'den geçti | OA-3 |
 | 2026-11-05 | OpenAI önbelleği: özet `user` mesajında, önbellekli token sayımı ve fiyatları düzeltildi | OA-4 |

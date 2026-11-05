@@ -114,7 +114,8 @@ def test_reply_shows_feedback_and_keeps_history_append_only(db: Session) -> None
     _say(db, partner, dialogue, "I work in a school.")
 
     first = partner.tasks[0]
-    assert "You: Hi! I'm Anna" in first and first.endswith("Learner: I am teacher.")
+    assert "You: Hi! I'm Anna" in first
+    assert first.endswith("Learner: <learner_text>I am teacher.</learner_text>")
     assert partner.tasks[1].startswith(first.rsplit("\nLearner turn", 1)[0])  # önek aynı
     assert "Learner turn 2" in partner.tasks[1]
 

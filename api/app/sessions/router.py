@@ -90,8 +90,7 @@ def post_extra(
 
 
 class WritingTask(BaseModel):
-    task: str  # modele giden görev (İngilizce)
-    task_tr: str  # öğrenciye gösterilen yönerge
+    task_tr: str  # öğrenciye gösterilen yönerge; modele giden görev sunucuda kurulur
     target_item_ids: list[int]
     item_en: str
     item_tr: str
@@ -122,7 +121,6 @@ def writing_task(db: Db, user: ConsentedUser) -> WritingTask:
     picked = chosen[0] if chosen else random.choice(candidates)
     item = db.get_one(Item, picked)
     return WritingTask(
-        task=f'Write one sentence about yourself using "{item.text_en}".',
         task_tr=f"“{item.text_en}” ({item.text_tr}) kullanarak kendinle ilgili bir cümle yaz.",
         target_item_ids=[item.id],
         item_en=item.text_en,

@@ -25,11 +25,17 @@ Davet kodu: `uv run python -m scripts.create_invites 5`. Rol: `uv run python -m 
 
 Ad ve e-posta prompt'a girmez. **Gidenler:** öğrencinin yazdığı metin, hedef, günlük süre, seviye, zayıf beceri, ilgi alanları, en sık hata kodları.
 
-- Öğrenci metninde e-posta varsa istek 422 ile reddedilir, hiçbir şey saklanmaz, metin ekranda kalır (`deps.reject_personal_data`). İlgi alanı için de aynısı.
+- Öğrenci metninde e-posta varsa istek 422 ile reddedilir, hiçbir şey saklanmaz, metin ekranda kalır (`deps.reject_personal_data`).
 - `generate_structured` içindeki koruma son savunma hattıdır: e-posta deseni bulursa çağrıyı yapmaz, `None` döner ve adresi kaydetmez.
 - OpenAI çağrıları `store=False` ile yapılır: yanıtlar sağlayıcıda uygulama verisi olarak saklanmaz. Kötüye kullanım günlükleri ayrıdır: 30 güne kadar tutulabilir.
 - Koruma yalnızca e-postayı tanır. Telefon, ad gibi bilgiler için "kişisel bilgi yazmayın" uyarısı planlanıyor (DZ-11).
-- İlgi alanları serbest metin olduğu için hem enjeksiyon hem uygunsuz içerik kapısıdır; listeden seçime dönecek (DZ-10).
+
+## Prompt enjeksiyonu
+
+- İlgi alanları sabit listeden seçilir; eski serbest metin değerleri prompt'a girmez (`known_interests`).
+- Öğrenci metni tek satırda `<learner_text>` içinde gider (`quote_learner`); sınırlayıcı taklidi ve satır sonu temizlenir. Prompt bu metnin veri olduğunu söyler.
+- İstemci görev metni gönderemez; serbest yazma görevi sunucuda kurulur.
+- Ölçüm: [deney kaydı](../experiments/2026-11-05-enjeksiyon.md). Enjeksiyon örnekleri her altın set koşusuna girer.
 
 ## Silme
 

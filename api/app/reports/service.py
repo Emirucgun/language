@@ -7,6 +7,7 @@ olaylardan aynı rapor çıkar.
 
 import uuid
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -28,6 +29,11 @@ REVIEW_STATE = 2  # fsrs.State.Review
 CONSOLIDATED_STABILITY_DAYS = 7  # ≥ 1 hafta hatırlanması beklenen öğe "kalıcılaştı" sayılır
 SLOW_SUCCESS = 0.6
 FAST_SUCCESS = 0.9
+# Şıklı ve yazılı ayrı sayılır: şıkta tahmin var, yazılı kanıt olmadan tempo hızlanmaz.
+MIN_CHOICE_ANSWERS = 5
+MIN_WRITTEN_ANSWERS = 3
+SLOW_WRITTEN = 0.4
+FAST_WRITTEN = 0.7
 
 
 class TopError(BaseModel):
@@ -45,6 +51,11 @@ class WeeklyMetrics(BaseModel):
     consolidated_items: int
     answers: int
     success_rate: float | None  # derecelendirilmiş cevaplarda Hard/Good/Easy oranı
+    # Eski raporlarda bu alanlar yok; varsayılanlar okumayı bozmaz.
+    choice_answers: int = 0
+    choice_success: float | None = None
+    written_answers: int = 0
+    written_success: float | None = None
     minutes_by_skill: dict[str, float]  # öneri ile seçim ayrımı H7 için ayrıca sayılır
     extra_chosen: int
     understood_rate: float | None  # H5: "anladım" oranı
@@ -53,11 +64,15 @@ class WeeklyMetrics(BaseModel):
     @property
     def pace(self) -> str:
         """Yeniden planlamada tempo: yavaş / normal / hızlı."""
-        if self.success_rate is None or self.answers < 5:
-            return "normal"
-        if self.success_rate < SLOW_SUCCESS:
+        choice = self.choice_success if self.choice_answers >= MIN_CHOICE_ANSWERS else None
+        written = self.written_success if self.written_answers >= MIN_WRITTEN_ANSWERS else None
+        if (choice is not None and choice < SLOW_SUCCESS) or (
+            written is not None and written < SLOW_WRITTEN
+        ):
             return "slow"
-        if self.success_rate >= FAST_SUCCESS and self.sessions_completed >= 4:
+        strong_choice = choice is not None and choice >= FAST_SUCCESS
+        strong_writing = written is not None and written >= FAST_WRITTEN
+        if strong_choice and strong_writing and self.sessions_completed >= 4:
             return "fast"
         return "normal"
 
@@ -71,6 +86,10 @@ def _window(user: User, week_start: date) -> tuple[datetime, datetime]:
     tz = ZoneInfo(user.timezone)
     start = datetime.combine(week_start, time.min, tz)
     return start, start + timedelta(days=7)
+
+
+def _success(rated: Sequence[Any]) -> float | None:
+    return round(sum(1 for e in rated if e.rating >= 2) / len(rated), 2) if rated else None
 
 
 def compute(db: Session, user: User, week_start: date) -> WeeklyMetrics:
@@ -92,6 +111,8 @@ def compute(db: Session, user: User, week_start: date) -> WeeklyMetrics:
     ).all()
     active_days = len({e.recorded_at.astimezone(tz).date() for e in events})
     rated = [e for e in events if e.rating is not None and e.item_id is not None]
+    choices = [e for e in rated if e.type == "answer_submitted"]
+    written = [e for e in rated if e.type == "writing_assessed"]
 
     # Bu hafta ilk kez derecelendirilen öğeler = yeni öğe.
     first_seen = {
@@ -163,9 +184,11 @@ def compute(db: Session, user: User, week_start: date) -> WeeklyMetrics:
         new_items=new_items,
         consolidated_items=consolidated or 0,
         answers=len(rated),
-        success_rate=round(sum(1 for e in rated if e.rating >= 2) / len(rated), 2)
-        if rated
-        else None,
+        success_rate=_success(rated),
+        choice_answers=len(choices),
+        choice_success=_success(choices),
+        written_answers=len(written),
+        written_success=_success(written),
         minutes_by_skill={k: round(v, 1) for k, v in sorted(minutes.items())},
         extra_chosen=sum(1 for e in events if e.type == "extra_activity_chosen"),
         understood_rate=round(sum(1 for r in reactions if r) / len(reactions), 2)

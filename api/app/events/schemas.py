@@ -4,7 +4,8 @@ Bir payload'un şekli değişirse `schema_version` artırılır ve eski sürüm�
 silinmez: eski olaylar yeniden oynatılırken hâlâ okunabilmelidir.
 """
 
-from typing import Literal
+from collections.abc import Iterable
+from typing import Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,11 +23,33 @@ class ConsentGiven(Payload):
     is_adult_confirmed: Literal[True]
 
 
+Interest = Literal[
+    "football",
+    "sports",
+    "music",
+    "films",
+    "food",
+    "travel",
+    "books",
+    "technology",
+    "games",
+    "animals",
+    "nature",
+    "shopping",
+]
+INTERESTS: frozenset[str] = frozenset(get_args(Interest))
+
+
+def known_interests(values: Iterable[str]) -> list[str]:
+    """Serbest metin döneminden kalan değerler prompt'a girmez."""
+    return sorted(set(values) & INTERESTS)
+
+
 class GoalSet(Payload):
     goal: Literal["travel", "work", "school", "daily_conversation"]
     daily_minutes: int = Field(ge=5, le=120)
     weak_skills: list[Literal["reading", "writing", "listening", "vocabulary"]]
-    interests: list[str] = Field(max_length=10)
+    interests: list[Interest] = Field(max_length=10)
 
 
 class FixedTestAnswer(Payload):

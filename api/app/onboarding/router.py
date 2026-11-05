@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from app.auth.router import Me
 from app.config import settings
-from app.deps import ConsentedUser, CurrentUser, Db, reject_personal_data
+from app.deps import ConsentedUser, CurrentUser, Db
 from app.events.schemas import GoalSet
 from app.events.service import record_event
 from app.onboarding import fixed_tests
@@ -49,11 +49,10 @@ def give_consent(body: ConsentRequest, db: Db, user: CurrentUser) -> Me:
 
 @router.post("/goals")
 def set_goals(body: GoalSet, db: Db, user: ConsentedUser) -> Me:
-    reject_personal_data(" ".join(body.interests))
     record_event(db, user_id=user.id, type="goal_set", payload=body.model_dump())
     user.goal = body.goal
     user.daily_minutes = body.daily_minutes
-    user.interests = sorted({i.strip().lower() for i in body.interests if i.strip()})
+    user.interests = sorted(set(body.interests))
     return Me.of(db, user)
 
 

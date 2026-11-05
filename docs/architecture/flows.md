@@ -4,7 +4,7 @@
 
 `/login`, `/auth/verify`, `/onboarding/consent`, `/onboarding/goals`, `/onboarding/placement`, `/panel`, `/session`, `/practice/recall`, `/practice/reading`, `/practice/writing`, `/practice/dialogue`, `/feedback`, `/curriculum`, `/report`, `/review`.
 
-Yönlendirme onam → hedef → yerleştirme → panel sırasını zorlar. İnceleyen girişten doğrudan `/review`'a gider. Tipler FastAPI şemasından üretilir: `npm run gen:api`.
+Yönlendirme onam → hedef → yerleştirme → panel sırasını zorlar. İlgi alanları sabit listeden seçilir. İnceleyen girişten doğrudan `/review`'a gider. Tipler FastAPI şemasından üretilir: `npm run gen:api`.
 
 ## Yerleştirme testi
 
@@ -28,7 +28,8 @@ Yönlendirme onam → hedef → yerleştirme → panel sırasını zorlar. İnce
 `app/sessions/`.
 
 - **Akış (`generation.py`):** tekrar motoru öğeleri seçer → kısa türlerde başkası için üretilmiş onaylı içerik yeniden kullanılır → kalanlar için tek Haiku çağrısı → her etkinlik ayrı doğrulanır (`validation.py`) → kalanlar için bir çağrı daha → yine kalırsa LLM'siz şablon (`templates.py`; okuma için şablon yok, oturumdan çıkar). Reddedilen çıktı `status = rejected` ile saklanır.
-- **Türler:** yeni öğe (anlam, 2 örnek, kontrol sorusu), hatırlama (3 şıklı boşluk doldurma ve Türkçe ipucu), mikro okuma (50–80 kelime, 2 soru), yazma görevi. Dinleme henüz yok.
+- **Türler:** yeni öğe (anlam, 2 örnek, kontrol sorusu), hatırlama (4 şıklı boşluk doldurma ve Türkçe ipucu), mikro okuma (50–80 kelime, 2 soru), yazma görevi. Dinleme henüz yok.
+- **Şıklar:** model doğru cevabı çoğunlukla ilk şıkka koyuyordu; bu yüzden sıra sunucuda, öğrenciye özgü ama sabit karıştırılır (`shuffled`). Şablon soruların çeldiricileri havuzdan gelir; dört şık çıkmazsa soru üretilmez.
 - **Değerlendirme (`service.py`):** cevap sunucuda değerlendirilir; öğrenciye giden görünümde cevap yoktur. Aynı soru iki kez sayılmaz. Tüm etkinlikler bitince `session_completed`.
 - **Üretim anı:** gece üretimi gelmediyse `GET /api/session/today` isteği aynı yolu çalıştırır. Bu istek uzun sürebilir: [jobs.md](jobs.md).
 
@@ -67,7 +68,7 @@ Doğru cümle yalnızca `submit_rewrite` ile, yeniden yazmadan sonra döner. Yen
 `app/reports/`.
 
 - **Metrikler (`service.py`):** yerel pazartesi–pazar penceresinde yalnızca olaylardan: aktif gün, tamamlanan oturum, yeni öğe, kalıcılaşan öğe (Review durumunda, kararlılık en az 7 gün), tekrar başarısı (Hard ve üstü oranı), beceri başına dakika, "anladım" oranı, ek çalışma seçimi, en sık hata. Rapor bir kez yazılır.
-- **Tempo:** başarı %60'ın altındaysa yavaş (kapasite × 0,75), en az %90 ve en az 4 oturumsa hızlı (× 1,25), az veride normal. Şıklı ve yazılı soruları ayırmıyor (DZ-5).
+- **Tempo:** şıklı ve yazılı ayrı sayılır (şıkta en az 5, yazıda en az 3 cevap). Şıkta %60'ın ya da yazıda %40'ın altındaysa yavaş (kapasite × 0,75). Şıkta en az %90, yazıda en az %70 ve en az 4 oturumsa hızlı (× 1,25); yazılı kanıt olmadan hızlanmaz. Az veride normal. Eşikler başlangıç değeridir.
 - **Yeniden plan (`weekly.py`):** hafta aktifse ajan ilerleme özetiyle çalışır: derecelendirilmiş olayı olan öğeler havuzdan çıkar, kapasite tempoya göre ayarlanır, `summary_tr` değişikliği ve nedenini söyler. Hiç gelmeyene LLM çağrısı yapılmaz; rapor yine yazılır.
 - **Ekran:** `/report`; panelde rapor varsa bağlantı.
 

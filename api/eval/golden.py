@@ -38,6 +38,7 @@ from scripts.import_golden import DEV, TEST, GoldenCase
 from scripts.sheets import utf8_output
 
 DEFAULT_DATA = Path(__file__).resolve().parents[2] / "eval/golden/feedback.jsonl"
+INJECTIONS = Path(__file__).resolve().parents[2] / "eval/golden/injection.jsonl"
 DEFAULT_TASK = "Write one short sentence."  # kişi yönlendirmez: "about yourself" düzeltmeyi bozdu
 MIN_JUDGMENTS = 150
 
@@ -142,7 +143,8 @@ def main() -> None:
     splits = splits_to_run(args.final, bool(os.environ.get("CI")))
     if not args.data.exists():
         sys.exit(f"Altın set yok: {args.data}. Önce: uv run python -m scripts.import_golden")
-    cases = load_cases(args.data)
+    # Enjeksiyon örnekleri Işıl'ın setinden ayrı durur: içe aktarma onları silmesin.
+    cases = load_cases(args.data) + load_cases(INJECTIONS)
 
     engine = create_engine(settings.database_url)
     with Session(engine) as session:

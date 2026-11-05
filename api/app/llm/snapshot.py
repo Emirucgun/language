@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.models import User
 from app.events.models import Event
+from app.events.schemas import known_interests
 from app.llm.models import LearnerSnapshot
 from app.llm.prompts import estimate_tokens
 from app.scheduler.models import ItemState
@@ -93,7 +94,7 @@ def gather_facts(session: Session, user_id: uuid.UUID) -> LearnerFacts:
         level=level if isinstance(level, str) else None,
         goal=user.goal,
         daily_minutes=user.daily_minutes,
-        interests=tuple(user.interests),
+        interests=tuple(known_interests(user.interests)),
         weak_skills=tuple(str(s) for s in weak) if isinstance(weak, list) else (),
         frequent_errors=tuple((str(code), int(n)) for code, n in errors),
         learned_items=learned or 0,

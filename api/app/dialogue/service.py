@@ -37,7 +37,7 @@ from app.feedback import prompt as feedback_prompt
 from app.feedback.models import Feedback
 from app.feedback.service import active_tags, store_feedback, stored_view
 from app.llm.client import LLMClient
-from app.llm.prompts import render_static
+from app.llm.prompts import quote_learner, render_static
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
 from app.onboarding.fixed_tests import user_level
@@ -51,7 +51,7 @@ from app.validator.feedback import validate_feedback
 
 log = structlog.get_logger()
 
-PROMPT_VERSION = "v2"  # v2: hata yeri karakter konumu değil alıntı (konumu sunucu bulur)
+PROMPT_VERSION = "v3"  # v3: öğrenci metni sınırlayıcı içinde veri; enjeksiyona karşı
 TARGET_ITEMS = 2
 PARTNER_WORDS = (1, 20)  # prompt 15 diyor; doğrulayıcı biraz pay bırakır
 FALLBACK_CONTINUE = PartnerLine(
@@ -218,13 +218,13 @@ def _task(
         f"You: {scenario.opening_en}",
     ]
     for t in history:
-        lines += [f"Learner: {t.learner}", f"You: {t.reply['partner_en']}"]
+        lines += [f"Learner: {quote_learner(t.learner)}", f"You: {t.reply['partner_en']}"]
     lines.append(f"Learner turn {turn} (the conversation lasts {MIN_TURNS}-{MAX_TURNS} turns).")
     if turn >= MAX_TURNS:
         lines.append("This is the last learner turn: close the conversation and set done to true.")
     elif turn < MIN_TURNS:
         lines.append("It is too early to end: keep the conversation going, done is false.")
-    lines.append(f"Learner: {learner_text}")
+    lines.append(f"Learner: {quote_learner(learner_text)}")
     return "\n".join(lines)
 
 

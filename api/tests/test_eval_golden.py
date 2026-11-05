@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from app.feedback.llm_schema import FoundError, WritingFeedback
-from eval.golden import h4_section, load_cases, report, splits_to_run
+from eval.golden import INJECTIONS, h4_section, load_cases, report, splits_to_run
 from eval.scoring import Prediction, score
 from eval.stats import lower_bound, upper_bound
 from scripts.import_golden import GoldenCase, write_cases
@@ -196,6 +196,13 @@ def test_cases_round_trip_through_the_imported_file(tmp_path: Path) -> None:
     path = tmp_path / "feedback.jsonl"
     write_cases(path, [_case()])
     assert load_cases(path) == [_case()]
+
+
+def test_injection_set_is_committed_and_labelled() -> None:
+    cases = load_cases(INJECTIONS)
+    assert len(cases) >= 10
+    assert all(c.kind == "enjeksiyon" and c.split == "dev" and c.has_error for c in cases)
+    assert all(c.tags and c.corrections for c in cases)
 
 
 # --- H4 -----------------------------------------------------------------------

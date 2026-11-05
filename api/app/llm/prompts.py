@@ -11,6 +11,7 @@ from pathlib import Path
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 _PLACEHOLDER = re.compile(r"\{\{([A-Z_]+)\}\}")
+_LEARNER_TAG = re.compile(r"</?\s*learner_text[^>]*>", re.IGNORECASE)
 
 
 @cache
@@ -25,6 +26,16 @@ def render_static(purpose: str, version: str, values: dict[str, str] | None = No
     if missing:
         raise KeyError(f"{purpose}/{version} için eksik yer tutucu: {sorted(missing)}")
     return _PLACEHOLDER.sub(lambda m: values[m.group(1)], template)
+
+
+def quote_learner(text: str) -> str:
+    """Öğrenci metni veridir: sınırlayıcı içinde, tek satırda.
+
+    Satır sonları ve sınırlayıcı taklidi temizlenir; yoksa öğrenci konuşmaya sahte satır
+    ekleyebilir. Hata yeri özgün metinde bulunur, bu temizlik yalnızca prompt içindir.
+    """
+    flat = " ".join(_LEARNER_TAG.sub(" ", text).split())
+    return f"<learner_text>{flat}</learner_text>"
 
 
 def estimate_tokens(text: str) -> int:

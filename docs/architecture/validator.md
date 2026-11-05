@@ -24,7 +24,7 @@ Model hata yerini karakter konumu olarak verince kaydırabiliyordu ve doğrulay�
 ## Bilinen sınırlar
 
 - Cümle başındaki özel isim sıradan kelimeden ayırt edilemez; üretici kullandığı isimleri izinli kelime olarak verir.
-- Okuma sorularının şık sayısı denetlenmiyor, şablon sorular hiç doğrulanmıyor (EK-8).
-- Okuma şıkları ve yazma görevleri seviye kontrolünden geçmiyor.
+- Yazma görevleri seviye kontrolünden geçmiyor.
+- Şablon sorular doğrulayıcıdan geçmez; içerik küratörlü alanlardan kurulur, dört şık kurulurken garanti edilir.
 - Rakamlar `words()` tarafından atılır.
-- `is_correct = true` ve hatasız sonuç kontrolleri atlar: öğrenci metnindeki enjeksiyon burada yakalanmaz (DZ-10).
+- `is_correct = true` ve hatasız sonuç kontrolleri atlar: enjeksiyona karşı koruma prompt ve sınırlayıcıya dayanır, [ölçüm](../experiments/2026-11-05-enjeksiyon.md).

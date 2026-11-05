@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.auth.models import User
 from app.content.models import Item
 from app.curriculum.service import ensure_curriculum, new_item_order
+from app.events.schemas import known_interests
 from app.llm.client import LLMClient
 from app.llm.prompts import render_static
 from app.llm.purposes import Purpose
@@ -41,7 +42,7 @@ from app.sessions.validation import (
 )
 from app.validator.core import VALIDATOR_VERSION, Lexicon, ValidationResult, load_lexicon
 
-PROMPT_VERSION = "v2"  # v2: "Can" isim listesinden çıktı (modal "can" ile karışıyor)
+PROMPT_VERSION = "v3"  # v3: 4 şık, doğru cevap sabit yerde değil
 SHAREABLE_KINDS = ("recall", "new_item")
 ORDER: dict[Kind, int] = {"new_item": 0, "recall": 1, "reading": 2, "writing": 3}
 READING = 0  # okuma tek öğeye bağlı değil; eksik listesinde bu anahtarla tutulur
@@ -130,7 +131,8 @@ def _all_cards(plan: SessionPlan) -> list[ItemCard]:
 
 
 def _interest_tag(user: User) -> str | None:
-    return sorted(user.interests)[0] if user.interests else None
+    known = known_interests(user.interests)
+    return known[0] if known else None
 
 
 def _reusable(db: Session, user: User, kind: Kind, card: ItemCard, cefr_sub: str) -> int | None:
@@ -157,7 +159,7 @@ def _cards_text(cards: list[ItemCard]) -> str:
 
 
 def _task(user: User, plan: SessionPlan) -> str:
-    interests = ", ".join(sorted(user.interests)) or "none"
+    interests = ", ".join(known_interests(user.interests)) or "none"
     return "\n".join(
         [
             f"Learner goal: {user.goal or 'unspecified'}; interests: {interests}",
@@ -283,7 +285,13 @@ def _store_content(
     return content_id
 
 
-def _templates(plan: SessionPlan, missing: Wanted) -> list[Final]:
+def _distractors(db: Session) -> list[ItemCard]:
+    """Şablon çeldiricileri havuzdan: plandaki birkaç öğe dört şıka yetmez."""
+    items = db.scalars(select(Item).where(Item.active, Item.cefr.in_(("A1", "A2"))))
+    return [_card(item) for item in items]
+
+
+def _templates(plan: SessionPlan, missing: Wanted, distractors: list[ItemCard]) -> list[Final]:
     """Hâlâ eksik olanlar için şablon. Okuma için şablon yok; oturumdan çıkar."""
     cards = _all_cards(plan)
     finals: list[Final] = []
@@ -291,9 +299,11 @@ def _templates(plan: SessionPlan, missing: Wanted) -> list[Final]:
         if kind == "reading":
             continue
         card = next(c for c in cards if c.id == item_id)
-        activity: ActivityModel = (
-            writing_from_card(card) if kind == "writing" else recall_from_card(card, cards)
+        activity: ActivityModel | None = (
+            writing_from_card(card) if kind == "writing" else recall_from_card(card, distractors)
         )
+        if activity is None:
+            continue  # çeldirici yetmedi: az şıklı soru yerine soru yok
         finals.append(
             Final("writing" if kind == "writing" else "recall", [card.id], "template", activity)
         )
@@ -388,7 +398,7 @@ def build_activities(
         if result.missing == missing and not result.accepted and not result.rejected:
             break  # çağrı hiç yapılamadı (limit/hata): tekrar denemenin anlamı yok
         missing = result.missing
-    finals += _templates(plan, missing)
+    finals += _templates(plan, missing, _distractors(db) if missing else [])
 
     for final in rejected:
         _store_content(db, final, user, plan.cefr_sub, "rejected")

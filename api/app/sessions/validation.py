@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from app.sessions.schemas import BLANK, Choice, NewItem, Reading, Recall, Writing
+from app.sessions.schemas import BLANK, OPTION_COUNT, Choice, NewItem, Reading, Recall, Writing
 from app.validator.activity import (
     READING_WORDS,
     check_level,
@@ -13,7 +13,7 @@ from app.validator.activity import (
 )
 from app.validator.core import Lexicon, ValidationResult
 
-# Prompt'ta izin verilen isimler ve şehirler (prompts/session/v2.md ile aynı).
+# Prompt'ta izin verilen isimler ve şehirler (prompts/session/v3.md ile aynı).
 NAMES = ("Ali", "Ayşe", "Mehmet", "Zeynep", "Elif", "Tom", "Anna")
 PLACES = ("Istanbul", "Ankara", "Izmir", "London", "Paris")
 
@@ -36,6 +36,11 @@ def _allowed(cards: list[ItemCard]) -> list[str]:
     return [*NAMES, *PLACES, *(f for c in cards for f in c.all_forms)]
 
 
+def _check_option_count(choice: Choice, result: ValidationResult) -> None:
+    if len(choice.options) != OPTION_COUNT:
+        result.add("option_count", str(len(choice.options)))
+
+
 def _check_choice(
     choice: Choice,
     card: ItemCard,
@@ -45,8 +50,7 @@ def _check_choice(
     gap: bool,
 ) -> None:
     check_single_answer(choice.options, choice.answer, result)
-    if len(choice.options) != 3:
-        result.add("option_count", str(len(choice.options)))
+    _check_option_count(choice, result)
     if gap:
         if choice.prompt.count(BLANK) != 1:
             result.add("gap_count", choice.prompt)
@@ -91,7 +95,10 @@ def validate_reading(a: Reading, cards: list[ItemCard], lexicon: Lexicon) -> Val
         result.add("question_count", str(len(a.questions)))
     for question in a.questions:
         check_single_answer(question.options, question.answer, result)
+        _check_option_count(question, result)
         check_level(question.prompt, lexicon, result, _allowed(cards))
+        for option in question.options:
+            check_level(option, lexicon, result, _allowed(cards))
     return result
 
 

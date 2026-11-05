@@ -678,7 +678,7 @@ export interface components {
             /** Weak Skills */
             weak_skills: ("reading" | "writing" | "listening" | "vocabulary")[];
             /** Interests */
-            interests: string[];
+            interests: ("football" | "sports" | "music" | "films" | "food" | "travel" | "books" | "technology" | "games" | "animals" | "nature" | "shopping")[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -947,15 +947,11 @@ export interface components {
             text: string;
             /** Activity Id */
             activity_id?: number | null;
-            /** Task */
-            task?: string | null;
             /** Target Item Ids */
             target_item_ids?: number[] | null;
         };
         /** WritingTask */
         WritingTask: {
-            /** Task */
-            task: string;
             /** Task Tr */
             task_tr: string;
             /** Target Item Ids */

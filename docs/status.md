@@ -12,7 +12,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 | Müfredat ajanı | Hazır | Gerçek öğe havuzu yok | Işıl |
 | Oturum üretimi ve doğrulayıcı | Kısmi | Anlamsal kontrol yok (DZ-8) | Emir |
 | Gece ön üretimi | Hazır | | Emir |
-| FSRS tekrar motoru | Kısmi | Derece eşlemesi (DZ-5) | Emir |
+| FSRS tekrar motoru | Hazır | Eşlemeler pilot verisiyle kalibre edilecek | Emir |
 | Yazma geri bildirimi | Kısmi | Yeniden yazma kapısı (DZ-9) | Emir |
 | Bekleyen geri bildirim işi | Hazır | | Emir |
 | Ek çalışma | Hazır | | Emir |
@@ -40,7 +40,7 @@ Durum değerleri: **Hazır**, **Kısmi**, **Yok**. "Kod hazır, onay bekliyor" o
 
 ## Bu hafta
 
-Şu an: Part 8 (OpenAI adaptörü). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
+Şu an: Part 9 (prompt değiştiren düzeltmeler). Sıra: [Uygulama partları](../MD%20files/D%C3%BCzeltme%20ve%20Geli%C5%9Ftirme%20Listesi.md#uygulama-partlar%C4%B1).
 
 ## Kod hazır, onay bekliyor
 

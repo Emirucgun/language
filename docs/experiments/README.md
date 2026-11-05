@@ -17,3 +17,5 @@
 - [2026-11-04 · Realtime API ile metinden ses](2026-11-04-tts-realtime.md)
 - [2026-11-05 · eval.golden uçtan uca deneme](2026-11-05-eval-golden-deneme.md)
 - [2026-11-05 · OpenAI adaptörü, şemalar ve önbellek](2026-11-05-openai-adaptor.md)
+- [2026-11-05 · Şıklı cevap derecesi ve şık konumu](2026-11-05-derece-eslemesi.md)
+- [2026-11-05 · Prompt enjeksiyonu](2026-11-05-enjeksiyon.md)

@@ -7,10 +7,12 @@
 | Cevap | Derece |
 | --- | --- |
 | Yanlış | Again |
-| İpuçlu doğru | Hard |
-| Doğru | Good |
+| Şıklı, ipuçlu doğru | Hard |
+| Şıklı doğru, tekrar aşamasında | Hard |
+| Şıklı doğru, öğrenme aşamasında | Good |
+| Yazılı doğru (ipucusuz) | Good |
 
-Easy kullanılmıyor. Yazma için yalnızca doğrulayıcıdan geçen geri bildirim derece üretir (`writing_assessed`). Okuma soruları ve diyalog cümleleri derecelendirilmez. Şıklı doğruyu Good saymak kararlılığı şişirir: DZ-5.
+Şıkta tahmin şansı var, ama Hard öğrenme aşamasından çıkarmaz; neden: [ADR-0007](../decisions/0007-sikli-cevap-derecesi.md). Easy kullanılmıyor. Yazma için yalnızca doğrulayıcıdan geçen geri bildirim derece üretir (`writing_assessed`). Okuma soruları ve diyalog cümleleri derecelendirilmez. Derece cevap anında olaya yazılır; yeniden oynatma onu kullanır.
 
 ## Durum
 

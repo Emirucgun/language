@@ -41,9 +41,9 @@ Dosyalar `app/llm/prompts/<amaç>/vN.md`. Yeni sürüm yeni dosyadır, eskisi es
 
 | Amaç | Güncel | Son değişiklik |
 | --- | --- | --- |
-| `session` | v2 | "Can" isim listesinden çıktı (modal "can" ile karışıyordu) |
-| `feedback` | v2 | Hata yeri karakter konumu değil alıntı |
-| `dialogue` | v2 | Hata yeri karakter konumu değil alıntı |
+| `session` | v3 | 4 şık, doğru cevap sabit yerde değil |
+| `feedback` | v3 | Öğrenci metni sınırlayıcı içinde veri |
+| `dialogue` | v3 | Öğrenci metni sınırlayıcı içinde veri |
 | `curriculum` | v2 | Türkçe metinde İngilizce dilbilgisi terimi yok; yeniden planda "bu hafta" dili |
 
 Model ya da prompt değişikliği altın set raporu olmadan birleşmez: [testing.md](testing.md#altın-set).

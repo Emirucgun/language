@@ -10,7 +10,7 @@ procrastinate, kendi `procrastinate` şemasında (göç 0003; bağlantı `search
 
 Zamanlayıcılar uygun kullanıcıları seçer ve kullanıcı başına tek iş açar (`queueing_lock`). `generate_session` 3 deneme hakkıyla çalışır; tekrar çalışması LLM'e ikinci kez gitmez.
 
-`ensure_session` bir iş değildir: kullanıcı oturumu hazır değilse `GET /api/session/today` isteği aynı yolu çalıştırır (GL-6 bu isteği arka plana alacak).
+`ensure_session` bir iş değildir: kullanıcı oturumu hazır değilse `GET /api/session/today` isteği aynı yolu çalıştırır. **Bilinen sorun (GL-6):** yeni kullanıcıda bu istek müfredat ve oturumu birlikte üretir; gerçek denemede 30,5 sn sürdü ve Next vekili 30 sn'de bağlantıyı kesti. Sunucu işi bitirir, öğrenci hata görür.
 
 ## Oturum seçim kuralı
 

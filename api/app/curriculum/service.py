@@ -64,14 +64,21 @@ def _weak_skills(db: Session, user_id: uuid.UUID) -> list[str]:
 PACE_FACTOR = {"slow": 0.75, "normal": 1.0, "fast": 1.25}
 
 
+def _rate(value: float | None) -> str:
+    return "n/a" if value is None else str(value)
+
+
 def _progress_lines(progress: WeeklyMetrics) -> list[str]:
     error = progress.top_error.code if progress.top_error else "none"
-    success = "n/a" if progress.success_rate is None else progress.success_rate
+    success = _rate(progress.success_rate)
     return [
         "WEEKLY REPLAN. Progress in the week that is ending now (call it 'bu hafta'):",
         f"- active days: {progress.active_days}, sessions completed: {progress.sessions_completed}",
         f"- new items met: {progress.new_items}, consolidated items: {progress.consolidated_items}",
         f"- review success rate: {success}",
+        f"- multiple-choice answers: {progress.choice_answers}, "
+        f"written answers: {progress.written_answers}, "
+        f"written success: {_rate(progress.written_success)}",
         f"- pace decided by the app: {progress.pace} (capacity already adjusted)",
         f"- most frequent error: {error}",
         "Items the learner has already met are removed from the pool. Plan the next 8 weeks "
