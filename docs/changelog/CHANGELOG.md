@@ -4,6 +4,8 @@ Her birleştirmede bir satır, en yenisi üstte. Model ve prompt sürümü deği
 
 | Tarih | Değişiklik | İlgili iş |
 | --- | --- | --- |
+| 2026-11-05 | `eval.golden`: altın set raporu, bölmeler ayrı, `test` yalnızca `--final`, CI'da reddedilir | DZ-2 |
+| 2026-11-05 | Oranlarla birlikte %95 güven sınırı; H4 tanımı blueprint'te üst sınıra çevrildi, X bekliyor | DZ-1 |
 | 2026-11-04 | Teknik MVP belgesi `docs/architecture/` altına bölündü, bayat ve çelişen yerler koda göre düzeltildi; eski belge indeks | DK-2, DZ-12 |
 | 2026-11-04 | On ölçüm `docs/experiments/` altına taşındı | DK-5 |
 | 2026-11-04 | Geçmiş kararlar ADR-0002 ile ADR-0006 arasına yazıldı; sağlayıcı ve TTS kararları OA-5 sonrası | DK-3 |

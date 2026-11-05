@@ -37,7 +37,7 @@ Kod değişikliği = kod + test + ilgili belge + `docs/changelog/CHANGELOG.md` s
 
 - Önemli karar (model, prompt, sağlayıcı dahil): `docs/decisions/` altında ADR.
 - Ölçüm: `docs/experiments/` altında yeni kayıt.
-- Model ya da prompt değişikliği: altın set raporu olmadan birleşmez (`eval.golden` Part 7'de geliyor; o zamana kadar elle ölçüp deney kaydı bırak).
+- Model ya da prompt değişikliği: altın set raporu olmadan birleşmez (`uv run python -m eval.golden`). Ayar sırasında yalnızca `dev`; `--final` nihai ölçüm içindir.
 - Şema değişikliği: yeni Alembic göçü; `upgrade` ve `downgrade` çalışmalı.
 - API değişikliği: `npm run gen:api` ile `web/src/lib/api-types.ts` yenilenir.
 
@@ -56,6 +56,7 @@ uv run python -m app.worker
 uv run python -m scripts.export_openapi ../web/openapi.json
 uv run python -m scripts.make_templates
 uv run python -m scripts.set_role e-posta reviewer
+uv run python -m eval.golden --purpose feedback
 ```
 
 Işıl'ın tabloları (`--apply` olmadan yalnızca rapor verir; akış: `docs/content/tablolar.md`):

@@ -48,6 +48,8 @@ Altın set, geri bildirimin kalitesini ölçer. Gerçek öğrenci hatalarına be
 | She go to school. | Evet | TENSE | She goes to school. \| She went to school. |
 | I like coffee. | Hayır | | |
 
+**Görev.** Öğrencinin neye cevap verdiğini yazın, örneğin `Write about your sister's job.` Boş bırakmayın: görev düzeltmeyi etkiliyor. "Kendinden bahset" görevinde model `She teacher.` cümlesini "I am a teacher." diye düzeltti.
+
 **Düzeltmeler.** Kabul edeceğiniz her doğru cümleyi `|` ile ayırarak yazın. Aşırı düzeltmeyi ölçtüğümüz için öğrencinin cümlesine en yakın olanları tercih edin.
 
 **Hatasız cümleler.** Sete mutlaka karıştırın, yaklaşık üçte biri kadar: model doğru cümleyi bozuyor mu, bunu ancak böyle görürüz.

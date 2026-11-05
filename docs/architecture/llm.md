@@ -44,7 +44,7 @@ Dosyalar `app/llm/prompts/<amaç>/vN.md`. Yeni sürüm yeni dosyadır, eskisi es
 | `dialogue` | v2 | Hata yeri karakter konumu değil alıntı |
 | `curriculum` | v2 | Türkçe metinde İngilizce dilbilgisi terimi yok; yeniden planda "bu hafta" dili |
 
-Model ya da prompt değişikliği altın set raporu olmadan birleşmez (`eval.golden` henüz yok: DZ-1, DZ-2).
+Model ya da prompt değişikliği altın set raporu olmadan birleşmez: [testing.md](testing.md#altın-set).
 
 ## Bağlam ve önbellek
 
