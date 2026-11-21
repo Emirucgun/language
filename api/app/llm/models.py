@@ -43,6 +43,7 @@ class LlmCall(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey(f"{LEARNING}.users.id"))
     purpose: Mapped[str] = mapped_column(String(16))
+    provider: Mapped[str] = mapped_column(String(16), server_default="anthropic")
     model: Mapped[str] = mapped_column(String(64))
     prompt_version: Mapped[str] = mapped_column(String(32))
     snapshot_id: Mapped[int | None] = mapped_column(ForeignKey(f"{LEARNING}.learner_snapshots.id"))

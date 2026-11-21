@@ -1,11 +1,12 @@
-"""Hangi kullanıcının oturumu şimdi ön üretilmeli? (Technical MVP, 7)
+"""Hangi kullanıcının oturumu şimdi ön üretilmeli? (docs/architecture/jobs.md)
 
 Kural: kullanıcının kendi saat diliminde saat 03:00'ü geçtiyse ve bugünün oturumu henüz
 hazır değilse üret. Zamanlayıcı 15 dakikada bir çalıştığı için gece kaçan bir kullanıcı
 (sunucu kapalıydı, iş hata verdi) ya da gün içinde kaydolan biri de kısa sürede yakalanır.
 
 Maliyet koruması: onboarding'i bitirmemiş ya da 7 gündür hiç gelmemiş kullanıcı için
-LLM'e para harcanmaz; geri döndüğünde oturumu istek anında üretilir.
+LLM'e para harcanmaz; geri döndüğünde oturumu istek anında üretilir. Yerleştirme testi
+bitmeden üretim yapılmaz: plan seviyesiz kurulur ve bir daha ilk haline dönmez.
 """
 
 import uuid
@@ -25,6 +26,11 @@ _DUE = text(
       AND u.consent_at IS NOT NULL
       AND u.is_adult_confirmed
       AND u.goal IS NOT NULL
+      AND EXISTS (
+        SELECT 1 FROM learning.events p
+        JOIN content.fixed_tests t ON t.id = (p.payload->>'test_id')::int
+        WHERE p.user_id = u.id AND p.type = 'fixed_test_completed' AND t.purpose = 'placement'
+      )
       AND extract(hour FROM now() AT TIME ZONE u.timezone) >= :hour
       AND (
         u.created_at > now() - make_interval(days => :inactive)

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import { MarkedText } from "@/components/marked-text";
+import { FlagButton } from "@/components/flag-button";
 import { Button, Card, ErrorText, Loading, Screen, inputClass } from "@/components/ui";
 import { ApiError, api, type DialogueView, type FeedbackView, type PartnerLine } from "@/lib/api";
 import { useMe } from "@/lib/use-me";
@@ -152,6 +153,11 @@ export default function DialoguePage() {
               </Button>
             </form>
           )}
+          <FlagButton
+            key={`flag-${dialogue.activity_id}`}
+            activityId={dialogue.activity_id}
+            label="Bu diyalogda sorun var"
+          />
         </>
       )}
       <ErrorText message={error} />

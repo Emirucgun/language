@@ -1,4 +1,4 @@
-"""Canlı üretilen etkinliklerin kontrolleri (Technical MVP, 6: doğrulayıcı tablosu).
+"""Canlı üretilen etkinliklerin kontrolleri (docs/architecture/validator.md).
 
 Her etkinlik türü kendi şemasını bu yapı taşlarıyla doğrular. Geçemeyen etkinlik bir kez
 yeniden üretilir, sonra yedek şablona düşer.

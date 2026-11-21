@@ -16,6 +16,7 @@ load_dotenv()
 from app import models  # noqa: E402, F401 - tüm tabloları kaydeder
 from app.auth.models import Invite  # noqa: E402
 from app.config import settings  # noqa: E402
+from scripts.sheets import utf8_output  # noqa: E402
 
 # Karışmaya müsait karakterler (0/O, 1/I/l) yok: kod elle de yazılabilsin.
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -27,6 +28,7 @@ def new_code() -> str:
 
 
 def main() -> None:
+    utf8_output()
     parser = argparse.ArgumentParser()
     parser.add_argument("count", type=int)
     parser.add_argument("--note", default=None)

@@ -13,7 +13,7 @@ MVP, pazar büyüklüğünü ya da ölçeği değil tek bir şeyi kanıtlamak zo
 | H1. Öğrenilen şey kalıyor | 14 gün sonra kelime ve kalıp hatırlama testi | En az %70 |
 | H2. Kullanıcı geri geliyor | 8. haftada haftalık aktif kullanıcı oranı | En az %40 |
 | H3. Seviye gerçekten artıyor | Ön test ve son test (A1–A2 kısa yerleştirme testi) | Anlamlı artış |
-| H4. Üretilen içerik ve geri bildirim doğru | Işıl'ın rastgele örneklem kontrolü (etkinlik, hata etiketi ve açıklama) | Yanlış öğretme %2'nin altı |
+| H4. Üretilen içerik ve geri bildirim doğru | Işıl'ın rastgele örneklem kontrolü (etkinlik, hata etiketi ve açıklama); en az 150 bağımsız yargı | Yanlış öğretme oranının %95 güvenle üst sınırı X'in altında (X Işıl'la belirlenecek) |
 | H5. Türkçe kaynaklı açıklama işe yarıyor | Geri bildirim sonrası "anladım / anlamadım" tıklaması | Açıklamaların çoğunda "anladım" (eşik pilotta belirlenir) |
 | H6. Memnuniyet | Pilot sonu NPS | 30 ve üzeri |
 | H7. Kişiye özel müfredat ve "Önerilen" etiketi işe yarıyor | Önerilen etkinliği seçme oranı; müfredat görme ile 8. hafta aktifliği ilişkisi (gözlemsel, nedensel iddia yok) | Yön gösterir; eşik pilotta belirlenir |
@@ -22,7 +22,7 @@ MVP, pazar büyüklüğünü ya da ölçeği değil tek bir şeyi kanıtlamak zo
 
 - Emir ve Işıl 14 gün boyunca ürünü kendileri günlük kullandı ve kritik hata kalmadı.
 - 5 kişilik alfa grubu (arkadaş ve aile, A1–A2 düzeyinde) en az 7 gün kullandı.
-- Geri bildirim modülünde Işıl'ın kontrol ettiği 100 örnekte yanlış öğretme oranı ölçüldü ve hedefin altında.
+- Işıl'ın incelediği en az 150 bağımsız yargıda yanlış öğretme oranı ölçüldü ve %95 güvenle üst sınırı hedefin altında.
 - Olay kaydı (Bölüm 5) her etkinlikte eksiksiz yazıyor ve haftalık raporu otomatik üretebiliyor.
 
 ## 2. Kapsam
@@ -139,7 +139,7 @@ Bu modelde **öğe listesi küratörlü, etkinlikler canlı üretilir.** Işıl 
 
 **Müfredat iskeleti.** A1–A2 hedefleri CEFR "yapabilir" tanımları, English Vocabulary Profile (kelime ve kalıp), English Grammar Profile (yapılar) ve Türkçe kaynaklı hata örüntülerinin kesişiminden seçilir (soru ÖT1). Bu profillerin ürün içinde yeniden kullanım koşulları henüz kontrol edilmedi; Faz 0'da lisans/kullanım şartları okunmalı.
 
-**Başlangıç havuzu.** 8 hafta × 6 gün × yaklaşık 4 yeni öğe = yaklaşık 200 öğe (kelime, kalıp ve yapı karışık). Her öğe için Türkçe karşılık ve en az bir hata riski notu hazırlanır; örnek cümleleri önceden yazmak gerekmez, yalnızca üretimi yönlendiren birkaç referans cümle yeterlidir.
+**Başlangıç havuzu.** Yaklaşık 200 öğe (kelime, kalıp ve yapı karışık). Günlük yeni öğe sayısı ayrılan süreye bağlıdır: 10 dakikada 2, 15–20 dakikada 3, daha uzunda 4. Yani 8 hafta × 6 gün boyunca öğrenci 96–192 öğe görür; varsayılan 15 dakikada 144. Havuz en hızlı öğrenciye de yetecek büyüklükte tutulur. Her öğe için Türkçe karşılık ve en az bir hata riski notu hazırlanır; örnek cümleleri önceden yazmak gerekmez, yalnızca üretimi yönlendiren birkaç referans cümle yeterlidir.
 
 **İçerik hattı**
 
@@ -180,7 +180,7 @@ LLM artık yalnızca geri bildirim değil, tüm etkinlik içeriğini ürettiği 
 | Etiket doğruluğu | Hata türü doğru bulunuyor mu | Pilot öncesi eşik belirlenir |
 | Aşırı düzeltme | Doğru cümleye hata deniyor mu | Mümkün olan en düşük |
 | Cevabı ele verme | İpucu yerine doğrusunu söylüyor mu | Neredeyse sıfır |
-| Yanlış öğretme | Açıklama dilbilgisi olarak yanlış mı | %2'nin altı |
+| Yanlış öğretme | Açıklama dilbilgisi olarak yanlış mı | İnsan kararı (H4); araç yalnızca kabul listesi dışındaki düzeltmeleri aday olarak gösterir |
 | Seviye uyumu | A1–A2 dışı kelime/yapı kullanımı | Kural kontrolü çok sıkı |
 
 **Canlı üretilen etkinliklerin denetimi.** Her etkinlik gösterilmeden önce otomatik kontrolden geçer: şema, seviye dışı kelime, hedef öğenin gerçekten kullanılması, cevabın sorunun içinde sızmaması, tek doğru cevap ve ses metni uyumu. Geçemeyen etkinlik bir kez yeniden üretilir, sonra yedek şablona düşer. Otomatik kontrol her hatayı yakalamaz; bu yüzden her etkinlikte "sorun var" düğmesi, Işıl'ın haftalık rastgele örneklemi (ilk pilot haftasında daha büyük) ve üretim sürümü kaydı bulunur. Kapsamlı "yanlış öğretme" oranı pilot sonunda bu örneklemden raporlanır.

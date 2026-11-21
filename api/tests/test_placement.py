@@ -60,7 +60,8 @@ def test_scoring_rules(a1: int, a2: int, estimate: str, sublevel: int) -> None:
 def test_options_are_shuffled_per_learner_but_stable() -> None:
     from app.onboarding.fixed_tests import views
 
-    first, second = uuid.uuid4(), uuid.uuid4()
+    # Sabit kimlikler: rastgele kimlikle son doğrulama ender koşularda kalıyordu.
+    first, second = uuid.UUID(int=1), uuid.UUID(int=2)
     mine = views(BANK, first)
     assert [v.options for v in mine] == [v.options for v in views(BANK, first)]  # devamda aynı
     assert [v.options for v in mine] != [v.options for v in views(BANK, second)]

@@ -1,6 +1,6 @@
 """Sağlayıcı soyutlaması. Uygulamanın geri kalanı yalnızca `LLMClient` arayüzünü görür.
 
-İstek üç katmanlıdır (Technical MVP, 6.2):
+İstek üç katmanlıdır (docs/architecture/llm.md):
   1. statik blok   – amaç başına herkes için aynı, 1 saatlik önbellek
   2. öğrenci özeti – kullanıcı başına günde bir donar, 5 dakikalık önbellek
   3. görev         – her çağrıda değişir, önbelleğe alınmaz
@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 import anthropic
-from pydantic import BaseModel
+from anthropic.types.beta import BetaMessage
+from pydantic import BaseModel, ValidationError
 
 from app.llm.pricing import Usage
 from app.llm.purposes import PurposeConfig
@@ -38,8 +39,18 @@ class LLMResult:
     raw_text: str | None
 
 
+class LLMProviderError(Exception):
+    """API ya da ağ hatası; `service` sağlayıcıyı bilmeden yakalar."""
+
+
 class LLMClient(Protocol):
-    def complete(self, request: LLMRequest) -> LLMResult: ...
+    def complete(self, request: LLMRequest) -> LLMResult:
+        """Yanıt geldiyse istisna fırlatmaz: ret, kesilme ve şema dışı çıktı `parsed=None`
+        döner, token kullanımı korunur. API ve ağ hataları `LLMProviderError` olur.
+
+        `stop_reason` sağlayıcıdan bağımsızdır: end_turn, max_tokens, refusal ya da başka bir
+        sebep. `usage.input_tokens` önbellek dışı girdidir."""
+        ...
 
 
 def build_system(request: LLMRequest) -> list[dict[str, Any]]:
@@ -62,6 +73,16 @@ def build_system(request: LLMRequest) -> list[dict[str, Any]]:
     return blocks
 
 
+def parse_output(request: LLMRequest, raw_text: str | None, complete: bool) -> BaseModel | None:
+    """Yalnızca sorunsuz biten yanıt kabul edilir; kesilmiş JSON tam görünse de güvenilmez."""
+    if not complete or raw_text is None:
+        return None
+    try:
+        return request.output_type.model_validate_json(raw_text)
+    except ValidationError:
+        return None
+
+
 class AnthropicClient:
     def __init__(self, api_key: str | None = None, timeout_s: float = 60.0) -> None:
         # SDK geçici hataları (429, 5xx, bağlantı) kendisi 2 kez yeniden dener.
@@ -73,24 +94,32 @@ class AnthropicClient:
         if config.server_fallback:
             extra = {"betas": [FALLBACK_BETA], "fallbacks": "default"}
 
+        # `parse` değil `create`: `parse` şema dışı yanıtta istisna fırlatır ve kullanım
+        # bilgisini kaybettirir. Doğrulama `parse_output`ta.
+        schema = anthropic.transform_schema(request.output_type.model_json_schema())
+        create: Any = self._client.beta.messages.create  # aşırı yüklemeler **extra ile uyuşmaz
         started = time.monotonic()
-        response = self._client.beta.messages.parse(
-            model=config.model,
-            max_tokens=config.max_tokens,
-            system=build_system(request),  # type: ignore[arg-type]
-            messages=[{"role": "user", "content": request.task}],
-            output_format=request.output_type,
-            output_config={"effort": config.effort},
-            **extra,
-        )
+        try:
+            response: BetaMessage = create(
+                model=config.model,
+                max_tokens=config.max_tokens,
+                system=build_system(request),
+                messages=[{"role": "user", "content": request.task}],
+                output_config={
+                    "effort": config.effort,
+                    "format": {"type": "json_schema", "schema": schema},
+                },
+                **extra,
+            )
+        except anthropic.APIError as exc:
+            raise LLMProviderError(f"{type(exc).__name__}: {exc}") from exc
         latency_ms = round((time.monotonic() - started) * 1000)
 
         usage = response.usage
         raw_text = next((b.text for b in response.content if b.type == "text"), None)
-        parsed = response.parsed_output if response.stop_reason == "end_turn" else None
         return LLMResult(
             model=response.model,
-            parsed=parsed,
+            parsed=parse_output(request, raw_text, response.stop_reason == "end_turn"),
             usage=Usage(
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,

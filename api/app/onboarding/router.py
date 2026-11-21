@@ -52,7 +52,7 @@ def set_goals(body: GoalSet, db: Db, user: ConsentedUser) -> Me:
     record_event(db, user_id=user.id, type="goal_set", payload=body.model_dump())
     user.goal = body.goal
     user.daily_minutes = body.daily_minutes
-    user.interests = sorted({i.strip().lower() for i in body.interests if i.strip()})
+    user.interests = sorted(set(body.interests))
     return Me.of(db, user)
 
 
@@ -87,7 +87,7 @@ def _result(p: Placement | None) -> PlacementResult | None:
 @router.get("/placement")
 def get_placement(db: Db, user: ConsentedUser) -> PlacementView:
     try:
-        current = fixed_tests.state(db, user.id, "placement")
+        current = fixed_tests.state(db, user.id, "pre")
     except fixed_tests.TestNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Yerleştirme testi yüklenmedi.") from exc
     return PlacementView(
@@ -102,7 +102,7 @@ def get_placement(db: Db, user: ConsentedUser) -> PlacementView:
 def post_placement_answer(body: PlacementAnswer, db: Db, user: ConsentedUser) -> None:
     try:
         fixed_tests.answer(
-            db, user.id, "placement", body.question_id, body.answer.strip(), body.duration_ms
+            db, user.id, "pre", body.question_id, body.answer.strip(), body.duration_ms
         )
     except fixed_tests.QuestionNotFound as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Soru bulunamadı.") from exc
@@ -112,6 +112,6 @@ def post_placement_answer(body: PlacementAnswer, db: Db, user: ConsentedUser) ->
 
 @router.post("/placement/complete")
 def complete_placement(db: Db, user: ConsentedUser) -> PlacementResult:
-    result = _result(fixed_tests.complete(db, user.id, "placement"))
+    result = _result(fixed_tests.complete(db, user.id, "pre"))
     assert result is not None
     return result

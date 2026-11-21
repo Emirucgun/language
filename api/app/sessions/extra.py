@@ -114,6 +114,7 @@ def generate_extra(db: Session, client: LLMClient, user: User, kind: ExtraKind) 
         recommended=kind == recommended,
         # Ek çalışma günde birkaç kez açılabilir: her üretimin şablonları ayrı içeriktir.
         template_salt=f"extra:{user.id}:{uuid.uuid4()}",
+        purpose="extra",
     )
     record_event(
         db,

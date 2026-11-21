@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type FormEvent, type KeyboardEvent, useState } from "react";
+import { type FormEvent, useState } from "react";
 
-import { Button, ErrorText, Loading, Screen, inputClass } from "@/components/ui";
+import { Button, ErrorText, Loading, Screen } from "@/components/ui";
 import { ApiError, api, type Schemas } from "@/lib/api";
 import { nextPath, useMe } from "@/lib/use-me";
 
 type Goal = Schemas["GoalSet"]["goal"];
 type Skill = Schemas["GoalSet"]["weak_skills"][number];
+type Interest = Schemas["GoalSet"]["interests"][number];
 
 const GOALS: { value: Goal; label: string }[] = [
   { value: "travel", label: "Seyahat" },
@@ -23,7 +24,21 @@ const SKILLS: { value: Skill; label: string }[] = [
   { value: "listening", label: "Dinleme" },
   { value: "writing", label: "Yazma" },
 ];
-const MAX_INTERESTS = 10;
+// Serbest metin değil: ilgi alanı prompt'a girer (enjeksiyon ve uygunsuz içerik kapısı olurdu).
+const INTERESTS: { value: Interest; label: string }[] = [
+  { value: "football", label: "Futbol" },
+  { value: "sports", label: "Spor" },
+  { value: "music", label: "Müzik" },
+  { value: "films", label: "Film" },
+  { value: "food", label: "Yemek" },
+  { value: "travel", label: "Seyahat" },
+  { value: "books", label: "Kitap" },
+  { value: "technology", label: "Teknoloji" },
+  { value: "games", label: "Oyun" },
+  { value: "animals", label: "Hayvanlar" },
+  { value: "nature", label: "Doğa" },
+  { value: "shopping", label: "Alışveriş" },
+];
 
 function Choice({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: string }) {
   return (
@@ -46,26 +61,14 @@ export default function GoalsPage() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [minutes, setMinutes] = useState(15);
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [interests, setInterests] = useState<string[]>([]);
-  const [draft, setDraft] = useState("");
+  const [interests, setInterests] = useState<Interest[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!me) return <Screen><Loading /></Screen>;
 
-  function addInterest() {
-    const value = draft.trim().toLowerCase();
-    if (value && !interests.includes(value) && interests.length < MAX_INTERESTS) {
-      setInterests([...interests, value]);
-    }
-    setDraft("");
-  }
-
-  function onInterestKey(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addInterest();
-    }
+  function toggleInterest(value: Interest) {
+    setInterests((list) => (list.includes(value) ? list.filter((x) => x !== value) : [...list, value]));
   }
 
   async function submit(e: FormEvent) {
@@ -124,40 +127,20 @@ export default function GoalsPage() {
           </div>
         </fieldset>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="interest" className="text-sm font-medium">
-            İlgi alanların (örnekler bunlardan seçilecek)
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="interest"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={onInterestKey}
-              placeholder="futbol, yemek, müzik…"
-              className={inputClass}
-            />
-            <Button type="button" variant="secondary" onClick={addInterest} disabled={!draft.trim()}>
-              Ekle
-            </Button>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium">İlgi alanların (örnekler bunlardan seçilecek)</legend>
+          <div className="flex flex-wrap gap-2">
+            {INTERESTS.map((interest) => (
+              <Choice
+                key={interest.value}
+                selected={interests.includes(interest.value)}
+                onClick={() => toggleInterest(interest.value)}
+              >
+                {interest.label}
+              </Choice>
+            ))}
           </div>
-          {interests.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {interests.map((i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    onClick={() => setInterests(interests.filter((x) => x !== i))}
-                    className="rounded-full bg-muted px-3 py-1 text-sm"
-                    aria-label={`${i} kaldır`}
-                  >
-                    {i} ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        </fieldset>
 
         <ErrorText message={error} />
         <Button type="submit" disabled={!goal || busy}>

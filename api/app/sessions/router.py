@@ -1,17 +1,19 @@
 """Bugünün oturumu, cevaplar ve ek çalışma (tekrar, okuma, yazma)."""
 
+import random
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import func, select
 
 from app.auth.models import User
 from app.content.models import Item
+from app.curriculum.service import latest, new_item_order, pool_for
 from app.deps import ConsentedUser, Db, get_llm_client
 from app.llm.client import LLMClient
+from app.onboarding.fixed_tests import user_level
 from app.scheduler.service import select_items
 from app.sessions import extra, service
 from app.sessions.extra import ExtraKind
@@ -88,8 +90,7 @@ def post_extra(
 
 
 class WritingTask(BaseModel):
-    task: str  # modele giden görev (İngilizce)
-    task_tr: str  # öğrenciye gösterilen yönerge
+    task_tr: str  # öğrenciye gösterilen yönerge; modele giden görev sunucuda kurulur
     target_item_ids: list[int]
     item_en: str
     item_tr: str
@@ -97,12 +98,17 @@ class WritingTask(BaseModel):
 
 @router.get("/api/practice/writing-task", tags=["practice"])
 def writing_task(db: Db, user: ConsentedUser) -> WritingTask:
-    active = select(Item.id).where(Item.active, Item.cefr.in_(("A1", "A2")))
-    candidates = list(db.scalars(active.order_by(Item.sublevel.nulls_last(), Item.id)))
-    if not candidates:
+    start_level, _ = user_level(db, user.id)
+    pool = [p.id for p in pool_for(db, start_level)]
+    if not pool:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Henüz içerik yüklenmedi.")
+    # Oturumla aynı kaynak: müfredat sırası (havuzdan çıkmış öğeler atlanır); plan yoksa havuz.
+    curriculum = latest(db, user.id)
+    active = set(pool)
+    planned = [i for i in new_item_order(curriculum) if i in active] if curriculum else []
+    candidates = planned or pool
 
-    # Önce vadesi gelen tekrar, yoksa sıradaki yeni öğe; ikisi de yoksa rastgele bir öğe.
+    # Önce vadesi gelen tekrar, yoksa sıradaki yeni öğe; ikisi de yoksa plandan rastgele bir öğe.
     selection = select_items(
         db,
         user.id,
@@ -112,10 +118,9 @@ def writing_task(db: Db, user: ConsentedUser) -> WritingTask:
         max_new=1,
     )
     chosen = selection.review_item_ids or selection.new_item_ids
-    picked = chosen[0] if chosen else db.scalar(active.order_by(func.random()).limit(1))
+    picked = chosen[0] if chosen else random.choice(candidates)
     item = db.get_one(Item, picked)
     return WritingTask(
-        task=f'Write one sentence about yourself using "{item.text_en}".',
         task_tr=f"“{item.text_en}” ({item.text_tr}) kullanarak kendinle ilgili bir cümle yaz.",
         target_item_ids=[item.id],
         item_en=item.text_en,

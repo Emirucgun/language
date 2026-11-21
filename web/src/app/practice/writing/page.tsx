@@ -61,7 +61,7 @@ export default function WritingPracticePage() {
         <WritingExercise
           key={round}
           taskTr={task.task_tr}
-          send={(text) => api.feedback({ text, task: task.task, target_item_ids: task.target_item_ids })}
+          send={(text) => api.feedback({ text, target_item_ids: task.target_item_ids })}
           onFinished={next}
           finishLabel="Yeni cümle"
         />

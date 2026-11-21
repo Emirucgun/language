@@ -14,12 +14,15 @@ from sqlalchemy import create_engine, text
 
 from app.onboarding.placement import FixedQuestion
 from scripts.dev_content import ERROR_TAGS, ITEMS
+from scripts.placement_form_b import QUESTIONS as PLACEMENT_B
 from scripts.placement_v1 import QUESTIONS as PLACEMENT_V1
+from scripts.sheets import utf8_output
 
 load_dotenv()
 
 
 def main() -> None:
+    utf8_output()
     engine = create_engine(os.environ["MIGRATIONS_DATABASE_URL"])
     with engine.begin() as conn:
         for code, name, explanation in ERROR_TAGS:
@@ -32,14 +35,15 @@ def main() -> None:
                 {"c": code, "n": name, "e": explanation},
             )
         # Sabit test: şemaya karşı doğrulanır; sürüm zaten varsa dokunulmaz (cevaplar ona bağlı).
-        questions = [FixedQuestion.model_validate(q).model_dump() for q in PLACEMENT_V1]
-        conn.execute(
-            text(
-                "INSERT INTO content.fixed_tests (purpose, version, questions) "
-                "VALUES ('placement', 1, CAST(:q AS jsonb)) ON CONFLICT DO NOTHING"
-            ),
-            {"q": json.dumps(questions, ensure_ascii=False)},
-        )
+        for form, bank in (("A", PLACEMENT_V1), ("B", PLACEMENT_B)):
+            questions = [FixedQuestion.model_validate(q).model_dump() for q in bank]
+            conn.execute(
+                text(
+                    "INSERT INTO content.fixed_tests (purpose, form, version, questions) "
+                    "VALUES ('placement', :f, 1, CAST(:q AS jsonb)) ON CONFLICT DO NOTHING"
+                ),
+                {"f": form, "q": json.dumps(questions, ensure_ascii=False)},
+            )
         existing = set(
             conn.scalars(text("SELECT text_en FROM content.items WHERE pool_version = 'dev-seed'"))
         )

@@ -1,21 +1,21 @@
 """LLM'e giden tek kapı: limit, kişisel veri koruması, çağrı ve `llm_calls` kaydı.
 
-Başarısız çağrı (ret, kesilme, şema dışı çıktı, API hatası) istisna fırlatmaz; sonuç
-`None` döner ve çağıran yedek yola geçer ("şimdilik atladık" ya da şablon). Yalnızca
-günlük limit ve kişisel veri ihlali istisnadır: bunlar programlama ya da politika hatasıdır.
+Başarısız çağrı (ret, kesilme, şema dışı çıktı, API hatası, kişisel veri) istisna
+fırlatmaz; sonuç `None` döner ve çağıran yedek yola geçer ("şimdilik atladık" ya da şablon).
+Yalnızca günlük limit istisnadır. Öğrenci metnindeki e-posta istekte reddedilir
+(`deps.reject_personal_data`); buradaki koruma son savunma hattıdır.
 """
 
 import re
 import uuid
 from dataclasses import dataclass
 
-import anthropic
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.llm.client import LLMClient, LLMRequest
+from app.llm.client import LLMClient, LLMProviderError, LLMRequest
 from app.llm.models import LlmCall
 from app.llm.pricing import cost_microusd
 from app.llm.purposes import Purpose, purpose_config
@@ -24,10 +24,6 @@ EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 
 
 class DailyLimitExceeded(Exception):
-    pass
-
-
-class PersonalDataInPrompt(Exception):
     pass
 
 
@@ -58,10 +54,15 @@ def calls_today(session: Session, user_id: uuid.UUID) -> int:
     )
 
 
-def _guard_personal_data(prompt: Prompt) -> None:
-    for part in (prompt.static_block, prompt.snapshot_block or "", prompt.task):
-        if EMAIL.search(part):
-            raise PersonalDataInPrompt("Prompt e-posta adresi içeriyor; LLM'e kimlik gönderilmez.")
+def contains_email(text: str) -> bool:
+    return EMAIL.search(text) is not None
+
+
+def _has_personal_data(prompt: Prompt) -> bool:
+    return any(
+        contains_email(part)
+        for part in (prompt.static_block, prompt.snapshot_block or "", prompt.task)
+    )
 
 
 def generate_structured[T: BaseModel](
@@ -73,9 +74,11 @@ def generate_structured[T: BaseModel](
     user_id: uuid.UUID | None,
 ) -> tuple[T | None, LlmCall]:
     """Çağrıyı yapar ve kaydeder. `LlmCall` satırı eklenir; commit çağırana aittir."""
-    _guard_personal_data(prompt)
-    if user_id is not None and calls_today(session, user_id) >= (
-        settings.llm_daily_call_limit_per_user
+    blocked = _has_personal_data(prompt)
+    if (
+        not blocked
+        and user_id is not None
+        and calls_today(session, user_id) >= settings.llm_daily_call_limit_per_user
     ):
         raise DailyLimitExceeded(str(user_id))
 
@@ -83,11 +86,18 @@ def generate_structured[T: BaseModel](
     call = LlmCall(
         user_id=user_id,
         purpose=prompt.purpose,
+        provider=config.provider,
         model=config.model,
         prompt_version=prompt.prompt_version,
         snapshot_id=prompt.snapshot_id,
     )
     parsed: T | None = None
+    if blocked:
+        call.status = "error"
+        call.raw_on_failure = "personal_data"  # adresin kendisi kayda girmez
+        session.add(call)
+        session.flush()
+        return None, call
     try:
         result = client.complete(
             LLMRequest(
@@ -98,9 +108,9 @@ def generate_structured[T: BaseModel](
                 output_type=output_type,
             )
         )
-    except anthropic.APIError as exc:
+    except LLMProviderError as exc:
         call.status = "error"
-        call.raw_on_failure = f"{type(exc).__name__}: {exc}"[:2000]
+        call.raw_on_failure = str(exc)[:2000]
     else:
         call.model = result.model
         call.input_tokens = result.usage.input_tokens

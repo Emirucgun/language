@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.models import User
 from app.events.models import Event
+from app.llm.models import LlmCall
 from app.scheduler.service import update_item_states
 from app.sessions import extra, service
 from app.sessions.models import Activity, ActivityContent
@@ -88,6 +89,13 @@ def test_recall_extra_uses_seen_items_and_records_the_choice(
     assert choice is not None and choice["chosen_kind"] == "recall"
     recommended = choice["recommended_kind"] == "recall"
     assert all(a.recommended == recommended for a, _ in rows)
+
+
+def test_extra_calls_are_logged_under_their_own_purpose(db: Session, item_ids: list[int]) -> None:
+    user = _practised(db, item_ids)
+    extra.generate_extra(db, SessionFake(), user, "recall")
+    purposes = db.scalars(select(LlmCall.purpose).where(LlmCall.user_id == user.id)).all()
+    assert purposes and set(purposes) == {"extra"}
 
 
 def test_reading_extra_and_server_grading(db: Session, item_ids: list[int]) -> None:

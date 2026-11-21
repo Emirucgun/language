@@ -4,6 +4,7 @@ Derecelendirilmiş olaylar (`rating`) buradan yazılamaz: dereceyi her zaman sun
 kuralları belirler. Etkinlik sahipliği kontrol edilir.
 """
 
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -12,7 +13,9 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 
 from app.deps import ConsentedUser, Db
+from app.events.models import Event
 from app.events.service import record_event
+from app.feedback.models import Feedback
 from app.sessions.models import Activity
 
 router = APIRouter(prefix="/api/events", tags=["events"])
@@ -42,6 +45,22 @@ class Recorded(BaseModel):
     id: int
 
 
+def _check_flag_target(db: Db, user_id: uuid.UUID, body: ClientEvent) -> None:
+    """Hedefsiz bayrak inceleme kuyruğuna düşmez; işe yaramaz."""
+    feedback_id = body.payload.get("feedback_id")
+    if feedback_id is None:
+        if body.activity_id is None:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Hedef gerekli.")
+        return
+    owner = db.scalar(
+        select(Event.user_id)
+        .join(Feedback, Feedback.writing_event_id == Event.id)
+        .where(Feedback.id == feedback_id)
+    )
+    if owner != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Geri bildirim bulunamadı.")
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def post_event(body: ClientEvent, db: Db, user: ConsentedUser) -> Recorded:
     if body.type not in CLIENT_EVENT_TYPES:
@@ -50,6 +69,8 @@ def post_event(body: ClientEvent, db: Db, user: ConsentedUser) -> Recorded:
         owner = db.scalar(select(Activity.user_id).where(Activity.id == body.activity_id))
         if owner != user.id:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Etkinlik bulunamadı.")
+    if body.type == "activity_flagged":
+        _check_flag_target(db, user.id, body)
     try:
         event = record_event(
             db,

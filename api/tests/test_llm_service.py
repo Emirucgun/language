@@ -4,8 +4,6 @@ import os
 import uuid
 from collections.abc import Iterator
 
-import anthropic
-import httpx2
 import pytest
 from alembic.config import Config
 from pydantic import BaseModel
@@ -14,9 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.feedback.llm_schema import WritingFeedback
+from app.llm.client import LLMProviderError
 from app.llm.service import (
     DailyLimitExceeded,
-    PersonalDataInPrompt,
     Prompt,
     calls_today,
     generate_structured,
@@ -62,6 +60,7 @@ def test_successful_call_is_logged_with_cost(session: Session) -> None:
     )
     assert parsed == OK
     assert call.status == "ok"
+    assert call.provider == "anthropic"
     assert call.model == "claude-sonnet-5-5"
     assert call.cache_read_tokens == 900
     assert call.cost_microusd and call.cost_microusd > 0
@@ -84,7 +83,7 @@ def test_unparsable_output_falls_back_and_keeps_raw_text(session: Session) -> No
 
 def test_api_error_does_not_raise(session: Session) -> None:
     user = _user(session)
-    error = anthropic.APIConnectionError(request=httpx2.Request("POST", "https://api.test"))
+    error = LLMProviderError("APIConnectionError: bağlantı yok")
     parsed, call = generate_structured(
         session,
         FakeClient(error=error),
@@ -114,15 +113,17 @@ def test_daily_limit_is_enforced(session: Session, monkeypatch: pytest.MonkeyPat
 
 def test_email_never_reaches_the_model(session: Session) -> None:
     client = FakeClient()
-    with pytest.raises(PersonalDataInPrompt):
-        generate_structured(
-            session,
-            client,
-            prompt=_prompt("Learner: my mail is ali@example.com"),
-            output_type=WritingFeedback,
-            user_id=_user(session),
-        )
+    parsed, call = generate_structured(
+        session,
+        client,
+        prompt=_prompt("Learner: my mail is ali@example.com"),
+        output_type=WritingFeedback,
+        user_id=_user(session),
+    )
     assert client.requests == []
+    assert parsed is None  # çağıran yedek yola geçer; istek çökmez
+    assert call.status == "error"
+    assert call.raw_on_failure == "personal_data"  # adresin kendisi kayda girmez
 
 
 def test_snapshot_is_saved_once_and_has_no_identity(session: Session) -> None:

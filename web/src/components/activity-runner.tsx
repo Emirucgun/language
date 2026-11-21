@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { ChoiceQuestion } from "@/components/choice-question";
+import { FlagButton } from "@/components/flag-button";
 import { Button, Card } from "@/components/ui";
 import { WritingExercise } from "@/components/writing-exercise";
 import { api, type ActivityView } from "@/lib/api";
@@ -156,6 +157,8 @@ export function ActivityQueue({
           setFinished((s) => new Set(s).add(current.id));
         }}
       />
+      {/* Yazma kendi düğmesini taşır: orada hedef geri bildirimdir. */}
+      {current.kind !== "writing" && <FlagButton key={`flag-${current.id}`} activityId={current.id} />}
     </>
   );
 }

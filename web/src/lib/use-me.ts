@@ -13,11 +13,16 @@ export function nextPath(me: Me): string {
   return "/panel";
 }
 
+/** Girişten sonraki ilk ekran: inceleyen öğrenci akışını bitirmek zorunda değil. */
+export function landingPath(me: Me): string {
+  return me.role === "reviewer" ? "/review" : nextPath(me);
+}
+
 /**
  * Giriş yapmış kullanıcıyı yükler. Giriş yoksa /login'e, sayfa bu kullanıcı için
  * henüz açılmamışsa (ör. onamdan önce panel) doğru adıma yönlendirir.
  */
-export function useMe(page: "consent" | "goals" | "placement" | "app"): Me | null {
+export function useMe(page: "consent" | "goals" | "placement" | "app" | "review"): Me | null {
   const router = useRouter();
   const [me, setMe] = useState<Me | null>(null);
 
@@ -32,7 +37,8 @@ export function useMe(page: "consent" | "goals" | "placement" | "app"): Me | nul
           page === "consent" ||
           (page === "goals" && user.consent_done) ||
           (page === "placement" && user.consent_done && !!user.goal) ||
-          (page === "app" && required === "/panel");
+          (page === "app" && required === "/panel") ||
+          (page === "review" && user.role === "reviewer");
         if (allowed) setMe(user);
         else router.replace(required);
       })

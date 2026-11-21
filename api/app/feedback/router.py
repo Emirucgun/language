@@ -3,7 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.deps import ConsentedUser, Db, get_llm_client
+from app.content.models import Item
+from app.deps import ConsentedUser, Db, get_llm_client, reject_personal_data
+from app.feedback.prompt import free_writing_task
 from app.feedback.retry import ready_for
 from app.feedback.service import FeedbackView, give_feedback, submit_rewrite
 from app.llm.client import LLMClient
@@ -17,8 +19,7 @@ class WritingRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
     # Oturum etkinliğinde görev ve hedef öğe sunucudaki içerikten okunur.
     activity_id: int | None = None
-    # Serbest pratikte (etkinlik yok) istemci gönderir.
-    task: str | None = Field(default=None, max_length=300)
+    # Serbest pratikte (etkinlik yok) yalnızca öğe gelir; görev metni sunucuda kurulur.
     target_item_ids: list[int] | None = Field(default=None, min_length=1, max_length=5)
 
 
@@ -53,6 +54,7 @@ def post_writing(
     user: ConsentedUser,
     client: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> FeedbackView:
+    reject_personal_data(body.text)
     activity = None
     if body.activity_id is not None:
         try:
@@ -63,10 +65,13 @@ def post_writing(
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Yazma etkinliği değil.")
         writing = Writing.model_validate(content.content)
         task, item_ids = writing.task_en, [writing.item_id]
-    elif body.task and body.target_item_ids:
-        task, item_ids = body.task, body.target_item_ids
+    elif body.target_item_ids:
+        item = db.get(Item, body.target_item_ids[0])
+        if item is None or not item.active:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Öğe bulunamadı.")
+        task, item_ids = free_writing_task(item.text_en), body.target_item_ids
     else:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Görev ya da etkinlik gerekli.")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Öğe ya da etkinlik gerekli.")
 
     view = give_feedback(
         db,

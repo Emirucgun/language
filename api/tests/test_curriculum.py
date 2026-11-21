@@ -14,12 +14,20 @@ from sqlalchemy.orm import Session
 
 from app.auth.models import User
 from app.curriculum.models import Curriculum
-from app.curriculum.rules import WEEKS, PoolItem, default_weights, fallback, validate
+from app.curriculum.rules import (
+    WEEKS,
+    PoolItem,
+    default_weights,
+    fallback,
+    validate,
+    weekly_capacity,
+)
 from app.curriculum.schemas import CurriculumDraft, SkillWeights, WeekDraft
-from app.curriculum.service import ensure_curriculum, new_item_order
+from app.curriculum.service import ensure_curriculum, new_item_order, view
 from app.events.models import Event
 from app.llm.client import LLMRequest, LLMResult
 from app.llm.pricing import Usage
+from app.scheduler.quotas import daily_quota
 from tests.test_api import FakeSender, _consent, _login, client, engine, sender  # noqa: F401
 from tests.test_session import item_ids  # noqa: F401 - havuzda öğe olsun
 
@@ -171,6 +179,51 @@ def test_replanning_creates_a_new_version(db: Session) -> None:
     assert db.scalar(
         select(Curriculum).where(Curriculum.user_id == user.id, Curriculum.version == 1)
     )
+
+
+def test_replan_moves_the_shown_week_forward_but_not_the_item_order(
+    db: Session, item_ids: list[int]
+) -> None:
+    """Yeniden plan yeni bir 8 hafta üretir: sıra planın 1. haftasından, gösterim ilerler."""
+    user = _user(db)
+    ensure_curriculum(db, Planner(), user)
+    replanned = ensure_curriculum(db, Planner(), user, reason="weekly_review")
+
+    shown = view(db, replanned)
+    assert shown.current_week == 2
+    assert [w.week for w in shown.weeks] == list(range(2, 2 + WEEKS))
+    assert [w.week for w in shown.weeks if w.current] == [2]
+    assert (
+        new_item_order(replanned)[: len(replanned.weeks[0]["item_ids"])]
+        == (replanned.weeks[0]["item_ids"])
+    )
+
+
+@pytest.mark.parametrize(("minutes", "per_week"), [(10, 12), (15, 18), (30, 24)])
+def test_large_pool_fits_every_daily_time(minutes: int, per_week: int) -> None:
+    pool = [PoolItem(i, f"w{i}", f"k{i}", "A1") for i in range(1, 201)]
+    capacity = weekly_capacity(daily_quota(minutes).max_new)
+    assert capacity == per_week
+
+    plan = fallback(pool, capacity, W)
+    result, _ = validate(plan, pool, capacity)
+    assert result.ok, result.issues
+    assert sum(len(w.item_ids) for w in plan.weeks) == capacity * WEEKS
+
+    # Kapasitenin %80'i yeterli, altı reddedilir: havuzun %80'i (160) istenmez.
+    enough = -(-capacity * WEEKS * 8 // 10) // WEEKS + 1
+    ids = [p.id for p in pool]
+    passing = _draft([ids[n * enough : (n + 1) * enough] for n in range(WEEKS)])
+    assert validate(passing, pool, capacity)[0].ok
+
+    short = capacity * 7 // 10
+    failing = _draft([ids[n * short : (n + 1) * short] for n in range(WEEKS)])
+    assert "low_coverage" in {i.code for i in validate(failing, pool, capacity)[0].issues}
+
+
+def test_quota_is_the_single_source_for_plan_and_session() -> None:
+    assert [daily_quota(m).max_new for m in (5, 10, 15, 20, 30, None)] == [2, 2, 3, 3, 4, 3]
+    assert [daily_quota(m).max_reviews for m in (10, 15, 30)] == [4, 6, 8]
 
 
 def test_new_item_order_starts_at_the_current_week() -> None:

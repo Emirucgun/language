@@ -26,6 +26,7 @@ def test_every_hypothesis_has_an_event_type() -> None:
     # H1/H3 testler, H5 tepki, H6 NPS, H7 öneri ve seçim.
     assert {
         "fixed_test_answer",
+        "retention_test_answer",
         "feedback_reaction",
         "nps_submitted",
         "extra_activity_chosen",

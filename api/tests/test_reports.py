@@ -4,7 +4,7 @@ import asyncio
 import os
 import uuid
 from collections.abc import Iterator
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import psycopg
 import pytest
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app import jobs
 from app.auth.models import User
 from app.curriculum.service import ensure_curriculum
-from app.reports.service import compute, week_start_for
+from app.reports.service import WeeklyMetrics, compute, week_start_for
 from app.reports.weekly import weekly_review
 from tests.conftest import _libpq_url
 from tests.test_api import FakeSender, _consent, _login, client, engine, sender  # noqa: F401
@@ -123,6 +123,83 @@ def test_metrics_come_from_this_weeks_events_only(db: Session, item_ids: list[in
     assert m.top_error is not None and m.top_error.code == "ARTICLE"
     assert m.top_error.explanation_tr.startswith("Tekil")
     assert m.pace == "slow"
+
+
+def _metrics(**values: object) -> WeeklyMetrics:
+    base: dict[str, object] = {
+        "week_start": date(2026, 11, 9),
+        "active_days": 5,
+        "sessions_completed": 5,
+        "new_items": 10,
+        "consolidated_items": 0,
+        "answers": 30,
+        "success_rate": 0.9,
+        "minutes_by_skill": {},
+        "extra_chosen": 0,
+        "understood_rate": None,
+        "top_error": None,
+    }
+    return WeeklyMetrics.model_validate(base | values)
+
+
+@pytest.mark.parametrize(
+    ("values", "pace"),
+    [
+        # Şıkta çok başarılı ama yazılı kanıt yok: tahmin olabilir, hızlanmaz.
+        ({"choice_answers": 30, "choice_success": 1.0}, "normal"),
+        (
+            {
+                "choice_answers": 30,
+                "choice_success": 1.0,
+                "written_answers": 2,
+                "written_success": 1.0,
+            },
+            "normal",
+        ),
+        # Şıkta ve yazıda güçlü: hızlanır.
+        (
+            {
+                "choice_answers": 30,
+                "choice_success": 0.95,
+                "written_answers": 4,
+                "written_success": 0.75,
+            },
+            "fast",
+        ),
+        # Az oturumda hızlanmaz.
+        (
+            {
+                "choice_answers": 30,
+                "choice_success": 0.95,
+                "written_answers": 4,
+                "written_success": 0.75,
+                "sessions_completed": 2,
+            },
+            "normal",
+        ),
+        # Şıkta iyi, yazıda zayıf: öğrenmemiş demektir.
+        (
+            {
+                "choice_answers": 30,
+                "choice_success": 0.95,
+                "written_answers": 5,
+                "written_success": 0.2,
+            },
+            "slow",
+        ),
+        ({"choice_answers": 10, "choice_success": 0.5}, "slow"),
+        ({"choice_answers": 4, "choice_success": 0.0}, "normal"),  # az veri
+        ({"answers": 0, "success_rate": None}, "normal"),
+    ],
+)
+def test_pace_counts_choice_and_written_answers_separately(
+    values: dict[str, object], pace: str
+) -> None:
+    assert _metrics(**values).pace == pace
+
+
+def test_old_reports_without_the_new_fields_still_load() -> None:
+    assert _metrics().written_answers == 0 and _metrics().pace == "normal"
 
 
 def test_weekly_review_replans_slower_without_seen_items(db: Session, item_ids: list[int]) -> None:

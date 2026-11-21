@@ -1,4 +1,4 @@
-"""Giriş bağlantısı gönderimi (Technical MVP, 5 ve 10).
+"""Giriş bağlantısı gönderimi (docs/architecture/security-privacy.md).
 
 Sağlayıcı Brevo; kod yalnızca SMTP konuşur, böylece sağlayıcı değiştirmek bir ayardır.
 `SMTP_HOST` tanımlı değilse (yerel geliştirme) bağlantı loga yazılır.

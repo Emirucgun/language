@@ -3,8 +3,9 @@
 import { type FormEvent, useState } from "react";
 
 import { FeedbackPanel } from "@/components/feedback-panel";
+import { FlagButton } from "@/components/flag-button";
 import { Button, Card, ErrorText, inputClass } from "@/components/ui";
-import { ApiError, api, type FeedbackView } from "@/lib/api";
+import { ApiError, type FeedbackView } from "@/lib/api";
 
 // Akış (blueprint, Bölüm 3): yaz → önce ipucu + Türkçe açıklama → yeniden yaz → doğrusu.
 type Stage =
@@ -29,7 +30,6 @@ export function WritingExercise({
   const [stage, setStage] = useState<Stage>({ kind: "compose" });
   const [text, setText] = useState("");
   const [complete, setComplete] = useState(false);
-  const [flagged, setFlagged] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: FormEvent) {
@@ -43,11 +43,6 @@ export function WritingExercise({
       setError(err instanceof ApiError ? err.message : "Gönderilemedi, tekrar dene.");
       setStage({ kind: "compose" });
     }
-  }
-
-  function flag() {
-    setFlagged(true);
-    void api.event({ type: "activity_flagged", payload: {}, activity_id: activityId ?? null });
   }
 
   const finished = stage.kind === "deferred" || (stage.kind === "feedback" && complete);
@@ -104,16 +99,10 @@ export function WritingExercise({
 
       {finished && <Button onClick={onFinished}>{finishLabel}</Button>}
 
-      {stage.kind !== "compose" && stage.kind !== "waiting" && (
-        <button
-          type="button"
-          onClick={flag}
-          disabled={flagged}
-          className="self-start text-sm text-subtle underline-offset-4 hover:underline disabled:no-underline"
-        >
-          {flagged ? "Bildirildi, teşekkürler." : "Bu etkinlikte sorun var"}
-        </button>
+      {stage.kind === "feedback" && (
+        <FlagButton activityId={activityId} feedbackId={stage.view.feedback_id} />
       )}
+      {stage.kind === "deferred" && <FlagButton activityId={activityId} />}
     </div>
   );
 }

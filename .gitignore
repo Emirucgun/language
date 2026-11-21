@@ -26,3 +26,6 @@ web/openapi.json
 
 # Lisanslı kaynak dosyalar (yeniden dağıtım izni açık değil; içe aktarma betiği indirir)
 content/sources/
+
+# TTS deneme sesleri (Işıl dinler, depoya girmez)
+eval/tts-samples/

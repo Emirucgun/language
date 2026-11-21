@@ -1,6 +1,6 @@
 # api
 
-FastAPI uygulaması ve procrastinate arka plan işleri. Mimari ve kararlar: `../MD files/Technical MVP – A1–A2 AI İngilizce Özel Öğretmen.md`.
+FastAPI uygulaması ve procrastinate arka plan işleri. Mimari ve kararlar: `../docs/README.md`.
 
 ```bash
 uv sync

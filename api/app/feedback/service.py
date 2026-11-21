@@ -25,7 +25,7 @@ from app.feedback.models import ErrorMark, Feedback
 from app.llm.client import LLMClient
 from app.llm.service import DailyLimitExceeded, Prompt, generate_structured
 from app.llm.snapshot import daily_snapshot
-from app.scheduler.engine import AnswerRating
+from app.scheduler.engine import rating_for_writing
 from app.scheduler.service import update_item_states
 from app.validator.core import Lexicon, ValidationResult, load_lexicon
 from app.validator.feedback import shown_errors, span_of, validate_feedback
@@ -229,7 +229,7 @@ def assess_writing(
             payload={"feedback_id": feedback.id, "is_correct": parsed.is_correct},
             activity_id=activity_id,
             item_id=primary_item,
-            rating=AnswerRating.GOOD if parsed.is_correct else AnswerRating.AGAIN,
+            rating=rating_for_writing(correct=parsed.is_correct),
         )
         update_item_states(session, user_id)
 

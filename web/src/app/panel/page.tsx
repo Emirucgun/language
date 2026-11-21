@@ -23,6 +23,7 @@ export default function PanelPage() {
   const [hasReport, setHasReport] = useState(false);
   const [readyCount, setReadyCount] = useState(0);
   const [recommended, setRecommended] = useState<string | null>(null);
+  const [due, setDue] = useState({ retention: false, post: false });
 
   useEffect(() => {
     if (!me) return;
@@ -39,6 +40,10 @@ export default function PanelPage() {
       .recommendation()
       .then((r) => setRecommended(r.recommended))
       .catch(() => setRecommended(null));
+    api
+      .testsDue()
+      .then(setDue)
+      .catch(() => setDue({ retention: false, post: false }));
   }, [me]);
 
   if (!me) return <Screen><Loading /></Screen>;
@@ -57,6 +62,26 @@ export default function PanelPage() {
         >
           <span className="font-medium">Geri bildirimlerin hazır</span>
           <span className="text-sm text-accent">{readyCount} cümle →</span>
+        </Link>
+      )}
+
+      {due.retention && (
+        <Link
+          href="/tests/retention"
+          className="flex min-h-12 items-center justify-between rounded-xl border border-accent bg-card px-4 hover:bg-muted"
+        >
+          <span className="font-medium">Hatırlama testi hazır</span>
+          <span className="text-sm text-accent">3 dakika →</span>
+        </Link>
+      )}
+
+      {due.post && (
+        <Link
+          href="/tests/post"
+          className="flex min-h-12 items-center justify-between rounded-xl border border-accent bg-card px-4 hover:bg-muted"
+        >
+          <span className="font-medium">Son test zamanı</span>
+          <span className="text-sm text-accent">10 dakika →</span>
         </Link>
       )}
 
